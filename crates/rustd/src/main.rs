@@ -52,8 +52,8 @@ use hir_def::{
 };
 use hir_ty::db::InternedClosureId;
 use hir_ty::mir::codegen::{
-    Backend, CodegenError, CodegenUnit, ContentId, Lazy, LazyHost, Mode, ParallelWork, Rejections,
-    Roots, SymbolResolver, exported_symbol,
+    Backend, CodegenError, CodegenUnit, ContentId, EagerReason, EagerSet, Lazy, LazyHost, Mode,
+    ParallelWork, Rejections, Roots, SymbolResolver, exported_symbol, functions_in_statics,
 };
 use ide_db::{ChangeWithProcMacros, RootDatabase};
 use load_cargo::{LoadCargoConfig, ProcMacroServerChoice};
@@ -2754,11 +2754,13 @@ fn warm_impls(
 
 /// The functions of the crates being built, listed once and again for the crates an edit can
 /// have changed the items of.
-#[derive(Default)]
 struct Listed {
     functions: std::sync::Mutex<FxHashMap<Crate, std::sync::Arc<ListedCrate>>>,
     /// Every crate that was listed, also once an edit has it listed again.
     built: std::sync::Mutex<FxHashSet<Crate>>,
+    /// Whether the build the list is for is lazy, which lists why each function is compiled
+    /// before the program runs; an eager build does not ask.
+    compilation: cargo::Compilation,
 }
 
 struct ListedCrate {
@@ -2767,6 +2769,9 @@ struct ListedCrate {
     kept: Vec<StaticId>,
     /// For each, whether a runtime looks it up by name.
     exported: Vec<bool>,
+    /// For each, why a lazy build compiles it before the program runs, when its declaration
+    /// or body gives a reason. `None` for an eager build, which never asks.
+    eager: Option<Vec<Option<EagerReason>>>,
     main: Option<FunctionId>,
 }
 
@@ -2778,7 +2783,7 @@ fn has_no_main(db: &RootDatabase, krate: Crate) -> bool {
 }
 
 impl ListedCrate {
-    fn new(db: &RootDatabase, krate: Crate) -> ListedCrate {
+    fn new(db: &RootDatabase, krate: Crate, compilation: cargo::Compilation) -> ListedCrate {
         let Declared { functions, statics, .. } = declared_in(db, krate);
         let kept = statics
             .into_iter()
@@ -2799,32 +2804,57 @@ impl ListedCrate {
             .find(|&it| hir::Function::from(it).is_main(db))
             .filter(|_| !has_no_main(db, krate));
         let exported = exported(db, &functions);
-        ListedCrate { functions, kept, exported, main }
+        let eager = match compilation {
+            cargo::Compilation::Eager => None,
+            cargo::Compilation::Lazy => Some(eager_reasons(db, &functions)),
+        };
+        ListedCrate { functions, kept, exported, eager, main }
     }
 }
 
 /// For each of `functions`, whether a runtime looks it up by name. Its attributes say, which
 /// are read off the source: on every core, as a build waits for this of every crate it builds.
 fn exported(db: &RootDatabase, functions: &[FunctionId]) -> Vec<bool> {
-    let exported = |db: &RootDatabase, functions: &[FunctionId]| -> Vec<bool> {
-        let exported = |&it| exported_symbol(db, it).is_some() || serves_allocator(db, it);
-        functions.iter().map(exported).collect()
+    of_each(db, functions, |db, it| exported_symbol(db, it).is_some() || serves_allocator(db, it))
+}
+
+/// For each of `functions`, the first reason in [`EagerReason`]'s order that its declaration
+/// or body gives a lazy build to compile it before the program runs, when one does. The
+/// reasons the build knows of the program, `main`, its tests and what its kept statics
+/// point to, are added by the build.
+fn eager_reasons(db: &RootDatabase, functions: &[FunctionId]) -> Vec<Option<EagerReason>> {
+    of_each(db, functions, |db, it| {
+        let declared = EagerReason::declared(db, it);
+        let allocator = serves_allocator(db, it).then_some(EagerReason::Allocator);
+        declared.into_iter().chain(allocator).min()
+    })
+}
+
+/// `of` for each of `functions`, in their order: on every core, in chunks, as a build waits
+/// for this of every crate it builds.
+fn of_each<T: Send>(
+    db: &RootDatabase,
+    functions: &[FunctionId],
+    of: impl Fn(&RootDatabase, FunctionId) -> T + Sync,
+) -> Vec<T> {
+    let each_of = |db: &RootDatabase, functions: &[FunctionId]| -> Vec<T> {
+        functions.iter().map(|&it| of(db, it)).collect()
     };
     let threads = std::thread::available_parallelism().map_or(1, |it| it.get());
     let each = functions.len().div_ceil(threads).max(256);
     if functions.len() <= each {
-        return exported(db, functions);
+        return each_of(db, functions);
     }
     std::thread::scope(|scope| {
         let parts: Vec<_> = functions
             .chunks(each)
             .map(|part| {
-                let db = db.clone();
-                scope.spawn(move || hir::attach_db(&db, || exported(&db, part)))
+                let (db, each_of) = (db.clone(), &each_of);
+                scope.spawn(move || hir::attach_db(&db, || each_of(&db, part)))
             })
             .collect();
         // A query that is cancelled unwinds, and goes on unwinding here as what it is.
-        let joined = |it: std::thread::ScopedJoinHandle<'_, Vec<bool>>| {
+        let joined = |it: std::thread::ScopedJoinHandle<'_, Vec<T>>| {
             it.join().unwrap_or_else(|e| std::panic::resume_unwind(e))
         };
         parts.into_iter().flat_map(joined).collect()
@@ -2844,13 +2874,17 @@ fn serves_allocator(db: &RootDatabase, func: FunctionId) -> bool {
 }
 
 impl Listed {
+    fn new(compilation: cargo::Compilation) -> Listed {
+        Listed { functions: Default::default(), built: Default::default(), compilation }
+    }
+
     /// Two builds that ask for a crate not listed yet both list it: neither waits for the other.
     fn of(&self, db: &RootDatabase, krate: Crate) -> std::sync::Arc<ListedCrate> {
         lock(&self.built).insert(krate);
         if let Some(listed) = lock(&self.functions).get(&krate) {
             return listed.clone();
         }
-        let listed = std::sync::Arc::new(ListedCrate::new(db, krate));
+        let listed = std::sync::Arc::new(ListedCrate::new(db, krate, self.compilation));
         lock(&self.functions).entry(krate).or_insert(listed).clone()
     }
 
@@ -3043,6 +3077,12 @@ fn build(
     let mut main = None;
     let mut local = Vec::new();
     let mut programs_own = Vec::new();
+    // What a lazy build compiles before the program runs, from what each function's listing
+    // says of it; an eager build has no such set and does nothing for one.
+    let mut eager = match args.compilation {
+        cargo::Compilation::Eager => None,
+        cargo::Compilation::Lazy => Some(EagerSet::default()),
+    };
     for (at, krate) in args.crates().enumerate() {
         for krate in crates_to_build(db, table, krate, args)? {
             local.push(krate);
@@ -3060,23 +3100,74 @@ fn build(
             // built are in the crate too.
             let running =
                 doctest::is_examples(db, krate.into()).then(|| doctest::running(db, krate));
-            functions.extend(listed_here.filter(|&(id, _)| {
+            let built_here = listed_here.filter(|&(id, _)| {
                 running.as_ref().is_none_or(|it| doctest::is_built(db, id.into(), it))
-            }));
+            });
+            match (&mut eager, &listed.eager) {
+                (None, _) => functions.extend(built_here),
+                (Some(eager), Some(reasons)) => {
+                    let reasons: FxHashMap<FunctionId, EagerReason> = listed
+                        .functions
+                        .iter()
+                        .zip(reasons)
+                        .filter_map(|(&func, reason)| Some((func, (*reason)?)))
+                        .collect();
+                    for (func, exported) in built_here {
+                        if let Some(&reason) = reasons.get(&func) {
+                            eager.note(func, reason);
+                        }
+                        functions.push((func, exported));
+                    }
+                }
+                (Some(_), None) => bail!("a lazy build listed a crate without its reasons"),
+            }
             // rustc's copy of the crate has them when rustc built it.
             if resolver.own_crate_id(krate.into()).is_some() {
                 kept.extend(&listed.kept);
             }
         }
     }
+    if let Some(eager) = &mut eager {
+        if let Some(main) = main {
+            eager.note(main, EagerReason::Main);
+        }
+        // rustc's harness calls every test by its link name, never through a call of ours.
+        if args.cfg_test {
+            for test in harness_tests(db, &resolver, &programs_own) {
+                eager.note(test, EagerReason::Test);
+            }
+        }
+        for func in hir::attach_db(db, || functions_in_statics(hir_db, &kept)) {
+            eager.note(func, EagerReason::PointedFromKeptStatic);
+        }
+    }
     let list = start.elapsed();
     // With a program to start from, only what it reaches is compiled, and what a runtime
-    // looks up by name. Without one any function may be the one called.
-    let (entries, on_demand): (Vec<_>, Vec<_>) = functions
-        .into_iter()
-        .partition(|&(func, exported)| exported || main.is_none() || main == Some(func));
+    // looks up by name. Without one any function may be the one called. In lazy mode the
+    // eager set is compiled too, and every other root is a stub.
+    let (entries, on_demand): (Vec<_>, Vec<_>) =
+        functions.iter().copied().partition(|&(func, exported)| {
+            exported
+                || main.is_none()
+                || main == Some(func)
+                || eager.as_ref().is_some_and(|eager| eager.contains(func))
+        });
     let unzip = |it: Vec<(FunctionId, bool)>| it.into_iter().map(|it| it.0).collect::<Vec<_>>();
     let (entries, on_demand) = (unzip(entries), unzip(on_demand));
+    let lazy = match eager {
+        None => None,
+        Some(eager) => {
+            let roots = functions.iter().filter_map(|&(func, _)| Some((func, eager.reason(func)?)));
+            let host = LazyHost {
+                // A daemon's worker will be told its build on the command line; none does yet.
+                build_id: None,
+                socket: args.socket.clone(),
+                rustd: std::env::current_exe().context("the worker's own path")?,
+                store: hir_ty::mir::codegen::store_dir(),
+            };
+            Some(Lazy { eager: roots.collect(), host })
+        }
+    };
     let harness = cargo::plan::Harness::of(&args.out)?;
     let doctest = programs_own.first().is_some_and(|&krate| doctest::is_examples(db, krate.into()));
     let reports: Vec<_> = if harness.is_some() && !doctest {
@@ -3099,6 +3190,18 @@ fn build(
     let setup = start.elapsed();
     if std::env::var_os("RUSTD_STATS").is_some() {
         eprintln!("entries: {:.1?}", setup - list);
+        if let Some(lazy) = &lazy {
+            let by_reason = EagerReason::ALL.map(|reason| {
+                let count = lazy.eager.iter().filter(|it| it.1 == reason).count();
+                (reason, count)
+            });
+            let counted: Vec<String> = by_reason
+                .iter()
+                .filter(|(_, count)| *count > 0)
+                .map(|(reason, count)| format!("{} {count}", reason.as_str()))
+                .collect();
+            eprintln!("eager: {} fns ({})", lazy.eager.len(), counted.join(", "));
+        }
     }
     // Not dropped from the roots: what they share with the others has to stay with rustc too.
     let mut denied = FxHashSet::default();
@@ -3138,10 +3241,9 @@ fn build(
     hir::attach_db(db, || known.set_stale(hir_db, stale.unwrap_or_default()));
     let looked = known.stale_steps();
     let revalidate = start.elapsed();
-    let lazy = Lazy { host: LazyHost };
-    let mode = match args.compilation {
-        cargo::Compilation::Eager => Mode::Eager,
-        cargo::Compilation::Lazy => Mode::Lazy(&lazy),
+    let mode = match &lazy {
+        None => Mode::Eager,
+        Some(lazy) => Mode::Lazy(lazy),
     };
     // Salsa attaches the database for the duration of the closure; the solver needs it.
     let mut unit =
@@ -3979,7 +4081,7 @@ fn build_batch(db: &RootDatabase, args: Args) -> anyhow::Result<()> {
             members: args.members.clone(),
         };
         let built = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            build(db, table, &args, &mut Rejections::default(), &mut Listed::default())
+            build(db, table, &args, &mut Rejections::default(), &Listed::new(args.compilation))
         }));
         let error = match built {
             Ok(Ok(_)) => continue,
@@ -4697,7 +4799,13 @@ fn lower_until(
     for name in args.crates() {
         for krate in crates_named(db, name, args)? {
             crates.push(krate.into());
-            functions.extend(listed.of(db, krate).functions.iter().copied().filter(|&func| {
+            let listed = listed.of(db, krate);
+            // A lazy build compiles only the functions with a reason to be eager; the rest
+            // are stubs, and compiling them ahead would be work the build never uses.
+            let has_reason =
+                |at: usize| listed.eager.as_ref().is_none_or(|reasons| reasons[at].is_some());
+            let seeded = listed.functions.iter().enumerate().filter(|&(at, _)| has_reason(at));
+            functions.extend(seeded.map(|(_, &func)| func).filter(|&func| {
                 let generic = |def: hir::GenericDef| !def.type_or_const_params(db).is_empty();
                 let container = match func.lookup(db).container {
                     ItemContainerId::ImplId(it) => !generic(hir::Impl::from(it).into()),
@@ -5314,7 +5422,7 @@ fn run_holding(mut args: Args, held: Option<Held>, ahead: bool) -> anyhow::Resul
             load(&projects, &cargo_config, load_config(), selection, said.as_ref().map(beside))?
         }
     };
-    let listed = Arc::new(Listed::default());
+    let listed = Arc::new(Listed::new(args.compilation));
     ide_db::base_db::set_process_env(&mut db, process::own());
     // What is compiled while cargo builds is stored too, so the store is told the toolchain
     // first. A build told ahead of cargo's links the library of the toolchain that was loaded, or

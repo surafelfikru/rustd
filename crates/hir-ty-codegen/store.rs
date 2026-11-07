@@ -466,6 +466,10 @@ impl StoreDir {
         StoreDir { dir: dir.to_owned() }
     }
 
+    pub fn path(&self) -> &Path {
+        &self.dir
+    }
+
     /// Makes the directory one this build reads and writes: creates it, and empties it when
     /// what is in it is of an older format. A directory of a newer format is an error, and
     /// is left as it is.
@@ -987,6 +991,11 @@ impl Store {
                 opened.map_err(|e| eprintln!("store: not used: {e}")).ok()
             })
             .as_ref()
+    }
+
+    /// The directory the store is in.
+    pub(super) fn dir(&self) -> &Path {
+        self.dir.path()
     }
 
     fn open(dir: &Path, identity: Identity, tuning: Tuning) -> io::Result<Store> {

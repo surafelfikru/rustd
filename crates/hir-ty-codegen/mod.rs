@@ -105,7 +105,7 @@ pub use reach::{Reached, reached};
 mod fuzz;
 mod home;
 mod lazy;
-pub use lazy::{Lazy, LazyHost, Mode, StubIndex};
+pub use lazy::{BuildId, EagerReason, EagerSet, Lazy, LazyHost, Mode, StubIndex};
 pub mod lints;
 pub use home::body_file;
 #[cfg(feature = "llvm")]
@@ -2203,6 +2203,57 @@ fn compiled_static<'db>(db: &'db dyn HirDatabase, id: StaticId) -> Result<Compil
     })?;
     let (blob, writable) = value.expect("`build` ran the closure");
     Ok(CompiledStatic { requests: cg.finish().0, blob, writable })
+}
+
+/// The functions whose addresses the statics in `kept` hold, directly or through the
+/// statics and instances their values point to: an `.init_array` entry, a registration a
+/// crate like `inventory` or `ctor` collects. No code of ours names them, so a lazy build
+/// compiles them before the program runs instead of stubbing them. Walked as the build
+/// walks a kept static's requests, through nested instances and statics; a static that
+/// cannot be compiled is walked no further, and the build says so where it is used.
+pub fn functions_in_statics(db: &dyn HirDatabase, kept: &[StaticId]) -> Vec<FunctionId> {
+    let (mut seen, mut seen_statics) = (FxHashSet::default(), FxHashSet::default());
+    let (mut found, mut found_set) = (Vec::new(), FxHashSet::default());
+    let mut stack = Vec::new();
+    for &id in kept {
+        if seen_statics.insert(id)
+            && let Ok(compiled) = compiled_static(db, id).as_ref()
+        {
+            stack.push(&compiled.requests);
+        }
+    }
+    while let Some(requests) = stack.pop() {
+        for request in &requests.funcs {
+            let FuncTarget::Instance(instance, env) = &request.target else { continue };
+            let only_regions = instance.args.as_ref().iter().all(|it| it.region().is_some());
+            match instance.def {
+                InstanceDef::Fn(func) if only_regions => {
+                    if found_set.insert(func) {
+                        found.push(func);
+                    }
+                }
+                _ if !seen.insert(instance) => {}
+                _ => {
+                    let compiled = compiled_instance(db, instance.clone(), env.clone());
+                    stack.extend(compiled.as_ref().ok().map(|it| &it.requests));
+                }
+            }
+        }
+        for request in &requests.datas {
+            if let DataRequest::Static(id) = request
+                && seen_statics.insert(*id)
+                && let Ok(compiled) = compiled_static(db, *id).as_ref()
+            {
+                stack.push(&compiled.requests);
+            }
+        }
+    }
+    found
+}
+
+/// The directory of the store this process compiles against, when it has one.
+pub fn store_dir() -> Option<std::path::PathBuf> {
+    store::Store::global().map(|it| it.dir().to_owned())
 }
 
 /// The signature a non-generic function is declared with by what calls it or takes its
