@@ -12,6 +12,8 @@ use cranelift_codegen::{
     settings::{self, Configurable},
 };
 
+use super::lazy::StubIndex;
+
 static SELECTED: OnceLock<Target> = OnceLock::new();
 
 #[derive(Debug)]
@@ -43,6 +45,36 @@ impl Arch {
             // An instruction is as long as `b`.
             Arch::Aarch64 => None,
             // A function of a module is replaced by its slot in the table, not by a jump.
+            Arch::Wasm32 => None,
+        }
+    }
+
+    /// The code of a function that is not compiled yet, in a lazy build: sixteen bytes that
+    /// put the stub's row in a register and then raise `SIGILL`, so a fault in it names the
+    /// function. The row is loaded with an instruction as long as the jump a replacement
+    /// is written over the entry with. Nothing for an architecture without a stub.
+    pub fn stub(self, index: StubIndex) -> Option<[u8; 16]> {
+        let index = index.get();
+        match self {
+            // `mov eax, imm32; ud2`, filled up with `int3`.
+            Arch::X86_64 => {
+                let [a, b, c, d] = index.to_le_bytes();
+                Some([
+                    0xb8, a, b, c, d, 0x0f, 0x0b, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc,
+                    0xcc,
+                ])
+            }
+            // `movz w16, #low; movk w16, #high, lsl #16; udf #0; nop`.
+            Arch::Aarch64 => {
+                let (low, high) = (index & 0xffff, index >> 16);
+                let words: [u32; 4] =
+                    [0x52800010 | (low << 5), 0x72a00010 | (high << 5), 0, 0xd503201f];
+                let mut bytes = [0; 16];
+                for (at, word) in words.iter().enumerate() {
+                    bytes[at * 4..at * 4 + 4].copy_from_slice(&word.to_le_bytes());
+                }
+                Some(bytes)
+            }
             Arch::Wasm32 => None,
         }
     }

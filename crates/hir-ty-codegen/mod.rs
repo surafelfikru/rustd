@@ -80,7 +80,8 @@ use self::fragment::{
     Code, CompiledFunction, CompiledStatic, DataRequest, FuncRequest, FuncTarget, Named, Recorder,
     Requests, TextPart, Variable,
 };
-use self::unwind::{FunctionUnwind, UnwindContext};
+use self::lazy::{StubRow, Stubs};
+use self::unwind::{FrameRows, FunctionUnwind, UnwindContext};
 use self::vtable::{Slot, Upcast, VtableLayout};
 use super::{
     AggregateKind, BasicBlockId, BinOp, CastKind, LocalId, MirBody, MirSpan, Operand, OperandKind,
@@ -103,6 +104,8 @@ pub use reach::{Reached, reached};
 #[cfg(test)]
 mod fuzz;
 mod home;
+mod lazy;
+pub use lazy::{Lazy, LazyHost, Mode, StubIndex};
 pub mod lints;
 pub use home::body_file;
 #[cfg(feature = "llvm")]
@@ -448,6 +451,8 @@ pub struct CodegenUnit {
     pub apart: Vec<Sidecar>,
     /// Roots that were compiled, with their exported symbol.
     pub compiled: Vec<(FunctionId, String)>,
+    /// Roots a lazy build put a stub in the object for, with the symbol the stub is under.
+    pub stubbed: Vec<(FunctionId, String)>,
     /// Roots that have to come from rustc.
     pub skipped: Vec<(FunctionId, CodegenError)>,
     /// Test return shims that could not be compiled.
@@ -479,12 +484,16 @@ impl CodegenUnit {
     ///
     /// A callee that can't be compiled poisons its callers, so codegen restarts with that callee
     /// rejected up front until a round finishes without a new rejection.
+    ///
+    /// In lazy mode `roots.entries` is the eager set, compiled as above; every other root
+    /// that compiled code names gets a stub instead, and nothing is compiled for its sake.
     pub fn compile(
         db: &dyn HirDatabase,
         symbols: &dyn SymbolResolver,
         roots: Roots<'_>,
         denied: &FxHashSet<FunctionId>,
         known: &mut Rejections,
+        mode: Mode<'_>,
     ) -> Result<CodegenUnit> {
         let on_demand: FxHashSet<FunctionId> = roots.on_demand.iter().copied().collect();
         let all = || roots.entries.iter().chain(roots.on_demand).copied();
@@ -531,6 +540,7 @@ impl CodegenUnit {
                     patch: Some(patch.object),
                     apart: Vec::new(),
                     compiled: base.compiled.clone(),
+                    stubbed: Vec::new(),
                     skipped: base.skipped.clone(),
                     report_errors: Vec::new(),
                     instances: base.instances.len(),
@@ -586,10 +596,15 @@ impl CodegenUnit {
             )?;
             cg.patching = patching;
             let mut compiled = Vec::new();
+            let mut stubbed = Vec::new();
             let mut skipped = Vec::new();
             let mut report_errors = Vec::new();
             let mut failed = Vec::new();
             let mut queue = roots.entries.to_vec();
+            // The queue starts as the entries, and the rest of it is what compiled code
+            // named: in lazy mode the entries are the eager set and the rest are stubs.
+            let eager_count = roots.entries.len();
+            let is_stub = |at: usize| matches!(mode, Mode::Lazy(_)) && at >= eager_count;
             let mut queued: FxHashSet<FunctionId> = queue.iter().copied().collect();
             let mut next = 0;
             if let Some(main) = start {
@@ -608,8 +623,11 @@ impl CodegenUnit {
                 // object one by one.
                 let ours: Vec<FunctionId> = queue[next..]
                     .iter()
-                    .copied()
-                    .filter(|root| !denied.contains(root) && !left.contains(root))
+                    .enumerate()
+                    .filter(|&(at, root)| {
+                        !denied.contains(root) && !left.contains(root) && !is_stub(next + at)
+                    })
+                    .map(|(_, &root)| root)
                     .collect();
                 let start = stdx::time::Instant::now();
                 // One without a symbol is not compiled, and is still lowered to be told why.
@@ -628,20 +646,29 @@ impl CodegenUnit {
                 // object.
                 cg.compile_ahead(ours, &mut |cg, ahead| {
                     while let Some(&root) = queue.get(next) {
+                        let stub = is_stub(next);
                         next += 1;
                         let result = if denied.contains(&root) {
                             Err(CodegenError::Unsupported("left to rustc on request".to_owned()))
                         } else if left.contains(&root) {
                             let reason = "shares an `async` block with a function left to rustc";
                             Err(CodegenError::Unsupported(reason.to_owned()))
+                        } else if stub {
+                            let start = stdx::time::Instant::now();
+                            let result = cg.define_stub(root);
+                            cg.phases.stubs += start.elapsed();
+                            result
                         } else {
                             cg.define_function(root)
                         };
                         match result {
+                            Ok(symbol) if stub => stubbed.push((root, symbol)),
                             Ok(symbol) => compiled.push((root, symbol)),
                             Err(e) => {
-                                // rustc's copy calls what ours would have.
-                                if !on_demand.is_empty()
+                                // rustc's copy calls what ours would have. A stub has no
+                                // body to look at for what that is, and names nothing.
+                                if !stub
+                                    && !on_demand.is_empty()
                                     && !e.no_symbol()
                                     && !cg.want_reachable_from(root)
                                 {
@@ -753,8 +780,15 @@ impl CodegenUnit {
                     patched: None,
                     declined,
                 };
-                if patching {
-                    *base = patch::Base::record(db, &cg, roots.entries, &compiled, &skipped);
+                match mode {
+                    Mode::Eager if patching => {
+                        *base = patch::Base::record(db, &cg, roots.entries, &compiled, &skipped);
+                    }
+                    // A lazy object has stubs no patch can tell apart from code: the first
+                    // edit after a lazy build is another full lazy round. The empty patch
+                    // object is still written, as the link line names it.
+                    Mode::Lazy(_) if patching => *base = None,
+                    Mode::Eager | Mode::Lazy(_) => {}
                 }
                 if let Some(path) = std::env::var_os("RUSTD_LAYOUTS") {
                     let lines = cg
@@ -781,6 +815,7 @@ impl CodegenUnit {
                     patch,
                     apart,
                     compiled,
+                    stubbed,
                     skipped,
                     report_errors,
                     instances,
@@ -1025,6 +1060,8 @@ pub struct Phases {
     pub resolve: std::time::Duration,
     /// Handing the code to the object.
     pub define: std::time::Duration,
+    /// Defining the stubs of a lazy build, which is nothing in an eager one.
+    pub stubs: std::time::Duration,
     /// Writing the object file.
     pub object: std::time::Duration,
     /// Working out what the functions left to rustc keep the rest from compiling.
@@ -1127,6 +1164,8 @@ struct ObjectCodegen<'a, 'db> {
     /// to write them to. The harness compares them with rustc's.
     layouts: FxHashMap<String, (u64, u64)>,
     phases: Phases,
+    /// The stubs of a lazy build, in the order they were defined.
+    stubs: Stubs,
     /// One line per function for `harness/shapes.py`, when `RUSTD_SHAPES` is set.
     shapes: Option<std::io::BufWriter<std::fs::File>>,
     /// How many compiled functions went into the object.
@@ -3325,6 +3364,7 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
             rejected,
             layouts: FxHashMap::default(),
             phases: Phases::default(),
+            stubs: Stubs::default(),
             shapes: std::env::var_os("RUSTD_SHAPES")
                 .and_then(|path| {
                     use std::io::Write;
@@ -3488,6 +3528,42 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
         let declared = self.declaration_at(func);
         let rows = self.debug.as_ref().map(|_| root_rows(db, func));
         self.describe(id, compiled, rows, FunctionDebug::new(name, symbol.clone()), declared);
+        Ok(symbol)
+    }
+
+    /// Puts a stub in the object in place of a root's code, under the root's rustc symbol:
+    /// sixteen bytes that abort with the stub's row (see `Arch::stub`), with a frame entry
+    /// of the entry rules alone so a backtrace gets past it. Nothing of the root's body
+    /// goes in the object, and the stub names nothing for the build to compile.
+    fn define_stub(&mut self, func: FunctionId) -> Result<String> {
+        let db = self.db;
+        let Some(symbol) = self.symbols.function(func) else {
+            let private = self.on_demand_crates.is_empty() && self.symbols.private(func);
+            return Err(if private { CodegenError::Private } else { CodegenError::NoSymbol });
+        };
+        // FIXME(M1 step 2): the signature is to come from `root_signature`, the callers'
+        // recipe over the declaration, without the body. Until then the compiled root's
+        // stands in, which lowers and compiles the body the stub is there to spare.
+        let compiled = compiled_root(db, func).as_ref().map_err(Clone::clone)?;
+        let signature = compiled.code.signature.clone();
+        let id = self.module.declare_function(&symbol, Linkage::Export, &signature)?;
+        let index =
+            self.stubs.push(StubRow { func, symbol: symbol.clone(), name: None, key: None })?;
+        let arch = Target::current().arch;
+        let bytes = arch.stub(index).ok_or_else(|| {
+            CodegenError::Unsupported(format!("lazy mode has no stub for {arch:?}"))
+        })?;
+        let code = Code {
+            signature,
+            bytes: bytes.to_vec(),
+            align: 16,
+            relocs: Vec::new(),
+            elf_types: Vec::new(),
+            unwind: Some(FunctionUnwind::from_rows(FrameRows { len: 16, rows: Vec::new() }, None)),
+            lines: Vec::new(),
+            slots: SlotPlaces::default(),
+        };
+        self.define_code(id, &code, &[])?;
         Ok(symbol)
     }
 

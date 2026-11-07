@@ -52,8 +52,8 @@ use hir_def::{
 };
 use hir_ty::db::InternedClosureId;
 use hir_ty::mir::codegen::{
-    Backend, CodegenError, CodegenUnit, ContentId, ParallelWork, Rejections, Roots, SymbolResolver,
-    exported_symbol,
+    Backend, CodegenError, CodegenUnit, ContentId, Lazy, LazyHost, Mode, ParallelWork, Rejections,
+    Roots, SymbolResolver, exported_symbol,
 };
 use ide_db::{ChangeWithProcMacros, RootDatabase};
 use load_cargo::{LoadCargoConfig, ProcMacroServerChoice};
@@ -109,6 +109,9 @@ struct Args {
     deny: Option<PathBuf>,
     /// Directory that gets one object per compiled function, for testing each in isolation.
     isolate: Option<PathBuf>,
+    /// Whether every reached function is compiled, or only the eager set with a stub that
+    /// aborts for each of the rest (`--lazy`).
+    compilation: cargo::Compilation,
     /// Build the workspace's crates as `cargo test` does, with `cfg(test)`.
     cfg_test: bool,
     /// Run build scripts and build proc macros in a directory of rustd's own under the
@@ -194,6 +197,7 @@ impl Args {
         let mut report = None;
         let mut deny = None;
         let mut isolate = None;
+        let mut compilation = cargo::Compilation::Eager;
         let mut cfg_test = false;
         let mut dev_deps = false;
         let mut own_target = false;
@@ -224,6 +228,7 @@ impl Args {
                 "--report" => report = Some(PathBuf::from(value()?)),
                 "--deny" => deny = Some(PathBuf::from(value()?)),
                 "--isolate" => isolate = Some(PathBuf::from(value()?)),
+                "--lazy" => compilation = cargo::Compilation::Lazy,
                 "--watch" => watch = true,
                 "--socket" => socket = Some(PathBuf::from(value()?)),
                 "--cfg-test" => cfg_test = true,
@@ -246,6 +251,9 @@ impl Args {
                 _ => bail!("unexpected argument {arg}"),
             }
         }
+        if compilation == cargo::Compilation::Lazy && isolate.is_some() {
+            bail!("`--isolate` builds one entry per function; lazy mode has none");
+        }
         Ok(Args {
             project: project.context("missing project path")?,
             krate: krate.context("missing --crate")?,
@@ -261,6 +269,7 @@ impl Args {
             report,
             deny,
             isolate,
+            compilation,
             cfg_test,
             own_target,
             selection: plan::Selection {
@@ -3129,9 +3138,14 @@ fn build(
     hir::attach_db(db, || known.set_stale(hir_db, stale.unwrap_or_default()));
     let looked = known.stale_steps();
     let revalidate = start.elapsed();
+    let lazy = Lazy { host: LazyHost };
+    let mode = match args.compilation {
+        cargo::Compilation::Eager => Mode::Eager,
+        cargo::Compilation::Lazy => Mode::Lazy(&lazy),
+    };
     // Salsa attaches the database for the duration of the closure; the solver needs it.
     let mut unit =
-        hir::attach_db(db, || CodegenUnit::compile(hir_db, &resolver, roots, &denied, known))
+        hir::attach_db(db, || CodegenUnit::compile(hir_db, &resolver, roots, &denied, known, mode))
             .map_err(anyhow::Error::msg)?;
     let name = |func| resolver.path(func).unwrap_or_else(|| "<assoc fn>".to_owned());
     let codegen = start.elapsed();
@@ -3234,7 +3248,8 @@ fn build(
                     reports: &[],
                     kept: &[],
                 };
-                CodegenUnit::compile(hir_db, &resolver, roots, &Default::default(), known)
+                let denied = FxHashSet::default();
+                CodegenUnit::compile(hir_db, &resolver, roots, &denied, known, Mode::Eager)
             })
             .map_err(anyhow::Error::msg)?;
             std::fs::write(dir.join(format!("{i}.o")), single.object.unwrap_or_default())?;
@@ -3953,6 +3968,7 @@ fn build_batch(db: &RootDatabase, args: Args) -> anyhow::Result<()> {
             report: Some(report.join(format!("{krate}.tsv"))),
             deny: None,
             isolate: None,
+            compilation: args.compilation,
             cfg_test: args.cfg_test,
             own_target: args.own_target,
             selection: args.selection.clone(),
@@ -5235,6 +5251,12 @@ fn run_holding(mut args: Args, held: Option<Held>, ahead: bool) -> anyhow::Resul
     let emits = emits.map_err(anyhow::Error::msg)?;
     if args.selection.target.is_some() {
         eprintln!("target: {}", emits.triple());
+    }
+    // The stubs and their table are written for ELF alone so far.
+    if args.compilation == cargo::Compilation::Lazy
+        && emits.object_format != hir_ty::mir::codegen::ObjectFormat::Elf
+    {
+        bail!("lazy mode: ELF only in M1");
     }
     let backend = Backend::from_env().map_err(anyhow::Error::msg)?;
     if backend != Backend::Cranelift {
@@ -6653,6 +6675,7 @@ impl Program {
                 ("reach", phases.compile),
                 ("resolve", phases.resolve),
                 ("define", phases.define),
+                ("stubs", phases.stubs),
                 ("object", phases.object),
                 ("discarded", phases.discarded),
                 (
@@ -6661,6 +6684,7 @@ impl Program {
                         phases.compile
                             + phases.resolve
                             + phases.define
+                            + phases.stubs
                             + phases.object
                             + phases.discarded,
                     ),
@@ -6725,8 +6749,15 @@ fn report_stats(stats: &hir_ty::mir::codegen::BuildStats) {
     }
     let phases = stats.phases;
     eprintln!(
-        "phases: compile {:.1?}, resolve {:.1?}, define {:.1?}, fallback {:.1?}, object {:.1?}, {} rounds",
-        phases.compile, phases.resolve, phases.define, phases.fallback, phases.object, stats.rounds
+        "phases: compile {:.1?}, resolve {:.1?}, define {:.1?}, stubs {:.1?}, fallback {:.1?}, \
+         object {:.1?}, {} rounds",
+        phases.compile,
+        phases.resolve,
+        phases.define,
+        phases.stubs,
+        phases.fallback,
+        phases.object,
+        stats.rounds
     );
 }
 

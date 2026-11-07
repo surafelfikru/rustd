@@ -6,6 +6,7 @@ pub(crate) mod wrapper;
 
 mod ancestor;
 mod cli;
+pub(crate) use cli::Compilation;
 mod client;
 mod clippy;
 mod package;

@@ -167,18 +167,23 @@ class Fixture:
         # The target's own objects too: a crate rustd rebuilds may be the one being linked.
         self.rlibs = [a for a in self.link_args if a.endswith((".rlib", ".rcgu.o"))]
 
-    def rustd_build(self, deny=()):
-        """Compiles each crate with rustd and links the objects ahead of rustc's rlibs."""
+    def rustd_build(self, deny=(), isolate=True, extra_args=()):
+        """Compiles each crate with rustd and links the objects ahead of rustc's rlibs.
+
+        With `isolate` the worker also writes one object per compiled function, for `isolate()`
+        to bisect with; a lazy build (`--lazy` in `extra_args`) has no such objects and refuses
+        the flag."""
         deny_file = os.path.join(self.work, "deny.txt")
         open(deny_file, "w").write("\n".join(deny))
         symbols = [x for rlib in self.rlibs + sysroot_rlibs() for x in ("--symbols", rlib)]
         objects, self.reports = [], {}
         for crate in self.crates:
             obj, report = (os.path.join(self.work, f"{label(crate)}.{ext}") for ext in ("o", "tsv"))
+            isolated = ["--isolate", os.path.join(self.work, f"{label(crate)}.isolated")] if isolate else []
             try:
                 run = subprocess.run(
                     [RUSTD, self.ws, *(x for c in crate.split(",") for x in ("--crate", c)), "--out", obj, "--report", report,
-                     "--deny", deny_file, "--isolate", os.path.join(self.work, f"{label(crate)}.isolated"),
+                     "--deny", deny_file, *isolated, *extra_args,
                      *self.rustd_args, *TARGET_ARGS, *symbols],
                     capture_output=True, text=True, timeout=self.rustd_timeout,
                     env={**os.environ, "RUSTD_LAYOUTS": self.layout_log})

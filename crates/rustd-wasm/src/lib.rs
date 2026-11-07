@@ -28,9 +28,7 @@ use hir_def::{
     AssocItemId, FunctionId, HasModule as _, ItemContainerId, Lookup, ModuleDefId, StaticId,
     signatures::FunctionSignature,
 };
-use hir_ty::mir::codegen::{
-    CodegenUnit, Rejections, Roots, SymbolResolver, exported_symbol,
-};
+use hir_ty::mir::codegen::{CodegenUnit, Mode, Rejections, Roots, SymbolResolver, exported_symbol};
 use ide_db::{
     ChangeWithProcMacros, RootDatabase,
     base_db::{
@@ -396,7 +394,8 @@ impl Compiler {
                     kept: &[],
                 };
             let unit = hir::attach_db(db, || {
-                CodegenUnit::compile(db, resolver, roots, &Default::default(), known)
+                let denied = Default::default();
+                CodegenUnit::compile(db, resolver, roots, &denied, known, Mode::Eager)
             })
             .map_err(|e| e.to_string())?;
             let before = entries.len();

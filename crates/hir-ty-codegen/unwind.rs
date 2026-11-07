@@ -177,7 +177,6 @@ impl FunctionUnwind {
     }
 
     /// The unwind information of code that came with its own.
-    #[cfg(feature = "llvm")]
     pub(super) fn from_rows(rows: FrameRows, landing_pads: Option<Vec<u8>>) -> Self {
         FunctionUnwind { frame: Frame::Rows(rows), landing_pads }
     }

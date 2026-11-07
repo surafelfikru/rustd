@@ -90,6 +90,15 @@ const WORKER_ENV: &[&str] = &[
     "RUSTD_SPLICE",
 ];
 
+/// Whether a build compiles every function it reaches, or only the ones the program needs
+/// before it runs, with a stub that aborts for each of the rest. The lazy build is for
+/// measuring what compiling on first call would save; it is not a program to ship.
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+pub(crate) enum Compilation {
+    Eager,
+    Lazy,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(crate) enum Subcommand {
     Build,
