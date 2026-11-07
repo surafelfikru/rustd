@@ -8,8 +8,17 @@
 //! is matched where the lazy build differs; with `Mode::Eager` every such branch is what
 //! the build did before the mode existed.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use cranelift_module::FuncId;
+use cranelift_object::{
+    ObjectProduct,
+    object::{
+        BinaryFormat, RelocationEncoding, RelocationFlags, RelocationKind, SectionFlags,
+        SectionKind, SymbolFlags, SymbolKind, SymbolScope, elf,
+        write::{Relocation, Symbol, SymbolSection},
+    },
+};
 use hir_def::{
     FunctionId, attrs::AttrFlags, expr_store::Body, hir::Expr, signatures::FunctionSignature,
 };
@@ -200,11 +209,11 @@ impl StubIndex {
 }
 
 /// What the table says of one stub.
-#[expect(dead_code, reason = "the table of stubs in the object reads the rows (M1 step 4)")]
 pub(super) struct StubRow {
+    #[expect(dead_code, reason = "compiling a stub's function on its first call reads it (M2)")]
     pub(super) func: FunctionId,
-    /// The rustc symbol the stub is defined under.
-    pub(super) symbol: String,
+    /// The stub as the module declared it, which the table's row points at.
+    pub(super) id: FuncId,
     /// The function's stable name, when it has one.
     pub(super) name: Option<String>,
     /// The key of its entry in the store, when it has a stable name.
@@ -227,9 +236,211 @@ impl Stubs {
         Ok(StubIndex(index))
     }
 
-    #[expect(dead_code, reason = "the table of stubs in the object reads the rows (M1 step 4)")]
     pub(super) fn rows(&self) -> &[StubRow] {
         &self.rows
+    }
+}
+
+/// The section a lazy object's table of stubs is in.
+pub const TABLE_SECTION: &str = ".rustd.lazy";
+/// The symbol at the start of the table, hidden from everything outside the program.
+pub const TABLE_SYMBOL: &str = "rustd_lazy_table";
+const MAGIC: [u8; 8] = *b"rustdlzy";
+const VERSION: u32 = 1;
+const HEADER: usize = 96;
+const ROW: usize = 16;
+const NO_KEY: u32 = u32::MAX;
+
+/// The table of a lazy object's stubs, which a process reads to find the daemon of its
+/// build and the function a stub stands in for, and so compile that function on its first
+/// call. One table per program, in the section [`TABLE_SECTION`] under [`TABLE_SYMBOL`].
+///
+/// It is little-endian and aligned to eight. A header of 96 bytes:
+///
+/// ```text
+/// magic "rustdlzy" [8]  version u32  count u32  build_id [16]  program [32]
+/// socket (off u32, len u32)  rustd (off, len)  store (off, len)  rows_off u32  pool_off u32
+/// ```
+///
+/// then `count` rows of 16 bytes, one per stub in the order of their indices:
+///
+/// ```text
+/// stub i32  name_off u32  name_len u32  key_off u32
+/// ```
+///
+/// then a pool of bytes the offsets point into, counted from the pool's start. `stub` is the
+/// stub's address less the field's own, so the table needs no relocation once linked. A
+/// build id or program of all zeros is none; a path or name of length zero is none; a key
+/// offset of `u32::MAX` is none, else it points at the 32 bytes of the stub's store key.
+pub(super) struct LazyTable {
+    bytes: Vec<u8>,
+    /// The offset of each row's `stub` field, with the stub it points at.
+    stubs: Vec<(u64, FuncId)>,
+}
+
+impl LazyTable {
+    pub(super) fn new(host: &LazyHost, stubs: &Stubs, program: Option<&[u8; 32]>) -> LazyTable {
+        let mut pool = Vec::new();
+        let mut place = |bytes: &[u8]| {
+            let at = pool.len() as u32;
+            pool.extend_from_slice(bytes);
+            (at, bytes.len() as u32)
+        };
+        fn bytes(path: &Path) -> &[u8] {
+            path.as_os_str().as_encoded_bytes()
+        }
+        let socket = host.socket.as_deref().map_or((0, 0), |it| place(bytes(it)));
+        let rustd = place(bytes(&host.rustd));
+        let store = host.store.as_deref().map_or((0, 0), |it| place(bytes(it)));
+        let rows: Vec<_> = stubs
+            .rows()
+            .iter()
+            .map(|row| {
+                let (name_off, name_len) =
+                    row.name.as_deref().map_or((0, 0), |it| place(it.as_bytes()));
+                let key_off = row.key.as_ref().map_or(NO_KEY, |it| place(it).0);
+                (row.id, name_off, name_len, key_off)
+            })
+            .collect();
+        let rows_off = HEADER;
+        let pool_off = rows_off + rows.len() * ROW;
+        let mut bytes = Vec::with_capacity(pool_off + pool.len());
+        bytes.extend_from_slice(&MAGIC);
+        bytes.extend_from_slice(&VERSION.to_le_bytes());
+        bytes.extend_from_slice(&(rows.len() as u32).to_le_bytes());
+        bytes.extend_from_slice(&host.build_id.map_or([0; 16], BuildId::bytes));
+        bytes.extend_from_slice(program.unwrap_or(&[0; 32]));
+        for (off, len) in [socket, rustd, store] {
+            bytes.extend_from_slice(&off.to_le_bytes());
+            bytes.extend_from_slice(&len.to_le_bytes());
+        }
+        bytes.extend_from_slice(&(rows_off as u32).to_le_bytes());
+        bytes.extend_from_slice(&(pool_off as u32).to_le_bytes());
+        debug_assert_eq!(bytes.len(), HEADER);
+        let mut placed = Vec::with_capacity(rows.len());
+        for (id, name_off, name_len, key_off) in rows {
+            placed.push((bytes.len() as u64, id));
+            // The stub's distance from here, which the linker writes.
+            bytes.extend_from_slice(&0i32.to_le_bytes());
+            for field in [name_off, name_len, key_off] {
+                bytes.extend_from_slice(&field.to_le_bytes());
+            }
+        }
+        bytes.extend_from_slice(&pool);
+        LazyTable { bytes, stubs: placed }
+    }
+
+    /// Puts the table in the object, kept by a linker that collects unused sections, with a
+    /// relocation per row that makes its `stub` field the stub's distance from the field.
+    pub(super) fn place(self, product: &mut ObjectProduct) -> std::result::Result<(), String> {
+        if product.object.format() != BinaryFormat::Elf {
+            return Err("lazy mode: the table of stubs is written for ELF only".to_owned());
+        }
+        let len = self.bytes.len() as u64;
+        let object = &mut product.object;
+        let section = object.add_section(
+            Vec::new(),
+            TABLE_SECTION.as_bytes().to_vec(),
+            SectionKind::ReadOnlyData,
+        );
+        object.section_mut(section).set_data(self.bytes, 8);
+        if let SectionFlags::Elf { sh_flags, .. } = object.section_flags_mut(section) {
+            *sh_flags |= elf::SHF_GNU_RETAIN;
+        }
+        for (offset, stub) in self.stubs {
+            let symbol = product.function_symbol(stub);
+            // As the unwind tables do: a local symbol is addressed through its section.
+            let object = &mut product.object;
+            let (symbol, addend) = object.symbol_section_and_offset(symbol).unwrap_or((symbol, 0));
+            let flags = RelocationFlags::Generic {
+                kind: RelocationKind::Relative,
+                encoding: RelocationEncoding::Generic,
+                size: 32,
+            };
+            let reloc = Relocation { offset, symbol, flags, addend: addend as i64 };
+            object.add_relocation(section, reloc).map_err(|e| e.to_string())?;
+        }
+        product.object.add_symbol(Symbol {
+            name: TABLE_SYMBOL.as_bytes().to_vec(),
+            value: 0,
+            size: len,
+            kind: SymbolKind::Data,
+            scope: SymbolScope::Linkage,
+            weak: false,
+            section: SymbolSection::Section(section),
+            flags: SymbolFlags::None,
+        });
+        Ok(())
+    }
+}
+
+/// A table of stubs as a process reads it, from the bytes at [`TABLE_SYMBOL`].
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParsedTable<'a> {
+    pub build_id: Option<[u8; 16]>,
+    pub program: Option<[u8; 32]>,
+    pub socket: Option<&'a [u8]>,
+    pub rustd: &'a [u8],
+    pub store: Option<&'a [u8]>,
+    pub rows: Vec<ParsedRow<'a>>,
+}
+
+/// One stub of a [`ParsedTable`].
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParsedRow<'a> {
+    /// The stub's address less the address of this row's first field.
+    pub stub: i32,
+    /// Where in the table this row starts, which `stub` is counted from.
+    pub at: usize,
+    pub name: Option<&'a str>,
+    pub key: Option<[u8; 32]>,
+}
+
+impl<'a> ParsedTable<'a> {
+    /// Reads a table, refusing one of another layout or one whose offsets point past its end.
+    pub fn parse(bytes: &'a [u8]) -> std::result::Result<ParsedTable<'a>, String> {
+        let short = || format!("a table of stubs is cut short at {} bytes", bytes.len());
+        let take = |at: usize, len: usize| bytes.get(at..at + len).ok_or_else(short);
+        let word = |at: usize| take(at, 4).map(|it| u32::from_le_bytes(it.try_into().unwrap()));
+        if take(0, 8)? != MAGIC {
+            return Err("not a table of stubs: the magic is not `rustdlzy`".to_owned());
+        }
+        let version = word(8)?;
+        if version != VERSION {
+            return Err(format!("a table of stubs of version {version}, this reads {VERSION}"));
+        }
+        let count = word(12)? as usize;
+        let nonzero = |it: &[u8]| it.iter().any(|b| *b != 0);
+        let build_id =
+            Some(take(16, 16)?).filter(|it| nonzero(it)).map(|it| it.try_into().unwrap());
+        let program = Some(take(32, 32)?).filter(|it| nonzero(it)).map(|it| it.try_into().unwrap());
+        let (rows_off, pool_off) = (word(88)? as usize, word(92)? as usize);
+        let pooled = |off: u32, len: u32| take(pool_off + off as usize, len as usize);
+        let path = |at: usize| -> std::result::Result<Option<&'a [u8]>, String> {
+            let (off, len) = (word(at)?, word(at + 4)?);
+            Ok(if len == 0 { None } else { Some(pooled(off, len)?) })
+        };
+        let (socket, store) = (path(64)?, path(80)?);
+        let rustd = path(72)?.ok_or("a table of stubs names no rustd")?;
+        let mut rows = Vec::with_capacity(count);
+        for index in 0..count {
+            let at = rows_off + index * ROW;
+            let stub = word(at)? as i32;
+            let (name_off, name_len, key_off) = (word(at + 4)?, word(at + 8)?, word(at + 12)?);
+            let name = match name_len {
+                0 => None,
+                _ => Some(
+                    std::str::from_utf8(pooled(name_off, name_len)?)
+                        .map_err(|_| format!("the name of stub {index} is not UTF-8"))?,
+                ),
+            };
+            let key = match key_off {
+                NO_KEY => None,
+                _ => Some(pooled(key_off, 32)?.try_into().unwrap()),
+            };
+            rows.push(ParsedRow { stub, at, name, key });
+        }
+        Ok(ParsedTable { build_id, program, socket, rustd, store, rows })
     }
 }
 
@@ -237,7 +448,11 @@ impl Stubs {
 mod tests {
     use salsa::plumbing::FromId as _;
 
-    use super::{super::Arch, BuildId, EagerReason, EagerSet, StubIndex};
+    use super::{
+        super::Arch, BuildId, EagerReason, EagerSet, LazyHost, LazyTable, ParsedTable, StubIndex,
+        StubRow, Stubs,
+    };
+    use cranelift_module::FuncId;
     use hir_def::FunctionId;
 
     /// A function id that is nothing but a number: the set never asks the database.
@@ -295,6 +510,76 @@ mod tests {
         assert!("0011".parse::<BuildId>().is_err());
         assert!("zz112233445566778899aabbccddeeff".parse::<BuildId>().is_err());
         assert!("00112233445566778899aabbccddeeff0".parse::<BuildId>().is_err());
+    }
+
+    fn three_stubs() -> Stubs {
+        let mut stubs = Stubs::default();
+        let rows =
+            [(Some("fn app::parse"), Some([7; 32])), (None, None), (Some("fn app::render"), None)];
+        for (n, (name, key)) in rows.into_iter().enumerate() {
+            let row = StubRow {
+                func: function(n as u64 + 1),
+                id: FuncId::from_u32(n as u32),
+                name: name.map(str::to_owned),
+                key,
+            };
+            assert_eq!(stubs.push(row).unwrap().get(), n as u32);
+        }
+        stubs
+    }
+
+    #[test]
+    fn a_table_reads_back_as_it_was_written() {
+        let host = LazyHost {
+            build_id: Some("00112233445566778899aabbccddeeff".parse().unwrap()),
+            socket: Some("/run/rustd/worker.sock".into()),
+            rustd: "/usr/bin/rustd".into(),
+            store: None,
+        };
+        let table = LazyTable::new(&host, &three_stubs(), Some(&[9; 32]));
+        // Each row's stub field is where the linker is told to write the distance.
+        let offsets: Vec<_> = table.stubs.iter().map(|it| it.0).collect();
+        assert_eq!(offsets, [96, 112, 128]);
+        let parsed = ParsedTable::parse(&table.bytes).unwrap();
+        assert_eq!(parsed.build_id, Some(host.build_id.unwrap().bytes()));
+        assert_eq!(parsed.program, Some([9; 32]));
+        assert_eq!(parsed.socket, Some(&b"/run/rustd/worker.sock"[..]));
+        assert_eq!(parsed.rustd, b"/usr/bin/rustd");
+        assert_eq!(parsed.store, None);
+        let rows: Vec<_> = parsed.rows.iter().map(|it| (it.stub, it.at, it.name, it.key)).collect();
+        assert_eq!(
+            rows,
+            [
+                (0, 96, Some("fn app::parse"), Some([7; 32])),
+                (0, 112, None, None),
+                (0, 128, Some("fn app::render"), None),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_table_of_a_worker_no_daemon_started_has_no_build_id_or_socket() {
+        let host =
+            LazyHost { build_id: None, socket: None, rustd: "/usr/bin/rustd".into(), store: None };
+        let table = LazyTable::new(&host, &Stubs::default(), None);
+        let parsed = ParsedTable::parse(&table.bytes).unwrap();
+        assert_eq!((parsed.build_id, parsed.program, parsed.socket), (None, None, None));
+        assert!(parsed.rows.is_empty());
+    }
+
+    #[test]
+    fn a_table_of_another_layout_is_refused() {
+        let host =
+            LazyHost { build_id: None, socket: None, rustd: "/usr/bin/rustd".into(), store: None };
+        let bytes = LazyTable::new(&host, &three_stubs(), None).bytes;
+        let mut magic = bytes.clone();
+        magic[0] = b'R';
+        assert!(ParsedTable::parse(&magic).unwrap_err().contains("magic"));
+        let mut version = bytes.clone();
+        version[8] = 2;
+        assert!(ParsedTable::parse(&version).unwrap_err().contains("version 2"));
+        assert!(ParsedTable::parse(&bytes[..bytes.len() - 1]).unwrap_err().contains("cut short"));
+        assert!(ParsedTable::parse(&bytes[..40]).unwrap_err().contains("cut short"));
     }
 
     fn x86_64(index: u32) -> [u8; 16] {

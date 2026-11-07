@@ -80,7 +80,7 @@ use self::fragment::{
     Code, CompiledFunction, CompiledStatic, DataRequest, FuncRequest, FuncTarget, Named, Recorder,
     Requests, TextPart, Variable,
 };
-use self::lazy::{StubRow, Stubs};
+use self::lazy::{LazyTable, StubRow, Stubs};
 use self::unwind::{FrameRows, FunctionUnwind, UnwindContext};
 use self::vtable::{Slot, Upcast, VtableLayout};
 use super::{
@@ -105,7 +105,10 @@ pub use reach::{Reached, reached};
 mod fuzz;
 mod home;
 mod lazy;
-pub use lazy::{BuildId, EagerReason, EagerSet, Lazy, LazyHost, Mode, StubIndex};
+pub use lazy::{
+    BuildId, EagerReason, EagerSet, Lazy, LazyHost, Mode, ParsedRow, ParsedTable, StubIndex,
+    TABLE_SECTION, TABLE_SYMBOL,
+};
 pub mod lints;
 pub use home::body_file;
 #[cfg(feature = "llvm")]
@@ -3508,6 +3511,11 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
             reloc.add(&mut product).map_err(CodegenError::Backend)?;
         }
         self.unwind.emit(&mut product).map_err(CodegenError::Backend)?;
+        if let Mode::Lazy(lazy) = self.mode {
+            let program = self.mixed.as_ref().and_then(|it| it.key);
+            let table = LazyTable::new(&lazy.host, &self.stubs, program.as_ref());
+            table.place(&mut product).map_err(CodegenError::Backend)?;
+        }
         let apart = match self.debug {
             Some(debug) => backend::Tally::global()
                 .step(Step::Describe, || debug.emit(&mut product))
@@ -3638,8 +3646,21 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
         };
         let signature = root_signature(db, func).as_ref().map_err(Clone::clone)?.clone();
         let id = self.module.declare_function(&symbol, Linkage::Export, &signature)?;
-        let index =
-            self.stubs.push(StubRow { func, symbol: symbol.clone(), name: None, key: None })?;
+        // The name and store key the function's code would be found under once compiled.
+        let args = GenericArgs::new_from_slice(&[]).store();
+        let checked = crate_checks_overflow(db, func.krate(db)).unwrap_or(false);
+        let name = self.stable_name(&Instance { def: InstanceDef::Fn(func), args, checked });
+        let program = self.mixed.as_ref().map(|it| it.key);
+        let key = match (&name, program) {
+            // A program of crates without an identity keeps nothing in the store.
+            (None, _) | (_, Some(None)) => None,
+            (Some(name), program) => {
+                cached::Entry::key(name, self.debug.is_some(), program.flatten().as_ref())
+            }
+        };
+        let name = name.map(|it| it.to_string());
+        let row = StubRow { func, id, name, key };
+        let index = self.stubs.push(row)?;
         let arch = Target::current().arch;
         let bytes = arch.stub(index).ok_or_else(|| {
             CodegenError::Unsupported(format!("lazy mode has no stub for {arch:?}"))
