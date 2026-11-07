@@ -35,6 +35,7 @@ const VALUED: &[&str] = &[
     "--config",
     "-Z",
     "-C",
+    "--eager",
 ];
 
 /// The flags that pick targets of a package, after which cargo runs no doc tests.
@@ -53,6 +54,9 @@ const TARGET_SELECTION: &[&str] = &[
 
 /// The flags of `cargo test` that are about running and not about building.
 const RUNNING: &[&str] = &["--no-run", "--no-fail-fast", "--rerun-all"];
+
+/// The flags of `cargo rustd` alone, which cargo is never given.
+const OURS: &[&str] = &["--eager"];
 
 /// The variables that change what cargo builds or what the daemon compiles with, by name
 /// or by what the name starts with. Their values are part of which build this is.
@@ -93,10 +97,38 @@ const WORKER_ENV: &[&str] = &[
 /// Whether a build compiles every function it reaches, or only the ones the program needs
 /// before it runs, with a stub that aborts for each of the rest. The lazy build is for
 /// measuring what compiling on first call would save; it is not a program to ship.
+///
+/// `cargo rustd` reads it from `--eager on|off`, or else from `RUSTD_LAZY` (`1` for lazy,
+/// `0` or unset for eager), and tells the worker with `--lazy`. It is part of which build
+/// this is, so a lazy build and an eager one of the same checkout have workers of their own.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
 pub(crate) enum Compilation {
     Eager,
     Lazy,
+}
+
+/// The variable a lazy build is asked for by, when `--eager` is not given.
+const LAZY_ENV: &str = "RUSTD_LAZY";
+
+impl Compilation {
+    /// From the value of `--eager`.
+    fn of_flag(value: Option<&str>) -> Result<Compilation, String> {
+        match value {
+            Some("on") => Ok(Compilation::Eager),
+            Some("off") => Ok(Compilation::Lazy),
+            Some(other) => Err(format!("`--eager {other}`: the value is `on` or `off`")),
+            None => Err("`--eager` takes `on` or `off`".to_owned()),
+        }
+    }
+
+    /// From the value of `RUSTD_LAZY`, unset or empty being eager.
+    fn of_env(value: Option<&str>) -> Result<Compilation, String> {
+        match value {
+            None | Some("" | "0") => Ok(Compilation::Eager),
+            Some("1") => Ok(Compilation::Lazy),
+            Some(other) => Err(format!("`{LAZY_ENV}={other}`: the value is `1` or `0`")),
+        }
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -179,6 +211,8 @@ pub(crate) struct Flags {
     pub(crate) tests: Option<String>,
     /// Whether a flag picks targets, so that `cargo test` runs no doc tests.
     pub(crate) selects_targets: bool,
+    /// What `--eager` asked for, or why its value is not one.
+    pub(crate) compilation: Option<Result<Compilation, String>>,
 }
 
 impl Asked {
@@ -227,17 +261,27 @@ impl Invocation {
                 joined => joined,
             };
             flags.read(flag, value.as_deref());
-            if RUNNING.contains(&flag) {
+            if RUNNING.contains(&flag) || OURS.contains(&flag) {
                 continue;
             }
             build_args.push(flag.to_owned());
             build_args.extend(value);
         }
         let trailing = after.to_vec();
-        // Cargo has no such flag, and is given what was typed when the build is its own.
-        let ours = |at: usize, word: &String| at < before.len() && word == "--rerun-all";
-        let typed = typed.iter().enumerate().filter(|(at, it)| !ours(*at, it));
-        let typed = typed.map(|it| it.1.clone()).collect();
+        // Cargo has no such flags, and is given what was typed when the build is its own.
+        let mut typed_ours = vec![false; typed.len()];
+        for (at, word) in before.iter().enumerate() {
+            let flag = word.split_once('=').map_or(word.as_str(), |it| it.0);
+            if word == "--rerun-all" || OURS.contains(&flag) {
+                typed_ours[at] = true;
+                // `--eager off`: the value is the next word.
+                if !word.contains('=') && VALUED.contains(&flag) && at + 1 < before.len() {
+                    typed_ours[at + 1] = true;
+                }
+            }
+        }
+        let typed = typed.iter().zip(typed_ours).filter(|it| !it.1).map(|it| it.0.clone());
+        let typed = typed.collect();
         Invocation { subcommand, typed, build_args, positional, trailing, flags }
     }
 
@@ -254,6 +298,12 @@ impl Invocation {
         // `run` builds what `build` does.
         let builds = if self.subcommand == Subcommand::Test { "test" } else { "build" };
         hash.update(builds);
+        // Not in the arguments: `--eager off` and `RUSTD_LAZY=1` are the same build. An eager
+        // build hashes nothing for it, so its key is what it was before lazy builds existed.
+        if self.compilation() == Ok(Compilation::Lazy) {
+            hash.update([3]);
+            hash.update("lazy");
+        }
         hash.update(cwd.as_os_str().as_encoded_bytes());
         for arg in &self.build_args {
             hash.update([0]);
@@ -294,9 +344,27 @@ impl Invocation {
         }
     }
 
+    /// Whether the build is lazy: by `--eager`, else by `RUSTD_LAZY`. A value that is none
+    /// of theirs is the reason the command is refused.
+    pub(crate) fn compilation(&self) -> Result<Compilation, String> {
+        match &self.flags.compilation {
+            Some(flag) => flag.clone(),
+            None => Compilation::of_env(std::env::var(LAZY_ENV).ok().as_deref()),
+        }
+    }
+
     /// Why what was typed is not built, wherever it is typed: the flag, by its name.
     fn unbuilt_flag(&self) -> Option<String> {
         let flags = &self.flags;
+        match self.compilation() {
+            Err(why) => return Some(why),
+            Ok(Compilation::Lazy) => {
+                if let Some(why) = lazy_unsupported(self.target().as_deref()) {
+                    return Some(why);
+                }
+            }
+            Ok(Compilation::Eager) => {}
+        }
         if let Some(flag) = &flags.plans {
             return Some(format!("`{flag}` is not answered by `cargo rustd` yet"));
         }
@@ -386,6 +454,7 @@ impl Flags {
             "--no-fail-fast" => self.no_fail_fast = true,
             "--rerun-all" => self.rerun_all = true,
             "--doc" => self.doc = true,
+            "--eager" => self.compilation = Some(Compilation::of_flag(value)),
             _ => {}
         }
     }
@@ -417,6 +486,18 @@ fn unsupported_target(triple: &str) -> Option<String> {
             None
         }
         Ok(_) => Some(format!("programs for {triple} are not linked through `cargo rustd` yet")),
+        Err(why) => Some(why),
+    }
+}
+
+/// Why a lazy build is not made for `triple` (the host's when none), when it is not: the
+/// table of stubs is written for ELF alone.
+fn lazy_unsupported(triple: Option<&str>) -> Option<String> {
+    use hir_ty::mir::codegen::{ObjectFormat, Target};
+    let triple = triple.unwrap_or(Target::host());
+    match Target::select(triple) {
+        Ok(target) if matches!(target.object_format, ObjectFormat::Elf) => None,
+        Ok(_) => Some(format!("a lazy build is made for ELF targets only, not {triple}")),
         Err(why) => Some(why),
     }
 }
@@ -531,5 +612,47 @@ mod tests {
         assert_ne!(build("test", "--bin a").key(cwd), build("build", "--bin a").key(cwd));
         assert_ne!(build("build", "").key(cwd), build("build", "").key(Path::new("/other")));
         assert_ne!(build("build", "--features a").key(cwd), build("build", "").key(cwd));
+    }
+
+    #[test]
+    fn eager_off_is_a_lazy_build_of_its_own_and_cargo_never_sees_the_flag() {
+        let cwd = Path::new("/ws");
+        let off = build("build", "-p a --eager off");
+        assert_eq!(off.compilation(), Ok(Compilation::Lazy));
+        assert_eq!(build("build", "--eager=off -p a").key(cwd), off.key(cwd));
+        assert_ne!(off.key(cwd), build("build", "-p a").key(cwd));
+        // `--eager on` is the eager build, whose key is the one it had before the flag.
+        let on = build("build", "-p a --eager on");
+        assert_eq!(on.compilation(), Ok(Compilation::Eager));
+        assert_eq!(on.key(cwd), build("build", "-p a").key(cwd));
+        for asked in [&off, &on, &build("run", "--eager=off -p a -- --eager on")] {
+            assert_eq!(asked.build_args, ["-p", "a"], "{asked:?}");
+            assert!(
+                !asked.typed[..asked.typed.len() - asked.trailing.len()]
+                    .iter()
+                    .any(|it| it.starts_with("--eager") || it == "on" || it == "off")
+            );
+        }
+        // What follows `--` is the program's, flags of ours or not.
+        let run = build("run", "--eager=off -p a -- --eager on");
+        assert_eq!(run.trailing, ["--eager", "on"]);
+        assert_eq!(run.typed, ["-p", "a", "--", "--eager", "on"]);
+    }
+
+    #[test]
+    fn rustd_lazy_asks_for_the_build_eager_off_does() {
+        assert_eq!(Compilation::of_env(Some("1")), Compilation::of_flag(Some("off")));
+        assert_eq!(Compilation::of_env(Some("0")), Ok(Compilation::Eager));
+        assert_eq!(Compilation::of_env(Some("")), Ok(Compilation::Eager));
+        assert_eq!(Compilation::of_env(None), Ok(Compilation::Eager));
+        assert!(Compilation::of_env(Some("yes")).unwrap_err().contains("RUSTD_LAZY=yes"));
+    }
+
+    #[test]
+    fn eager_with_another_value_is_refused() {
+        let maybe = build("build", "--eager maybe");
+        assert!(maybe.compilation().unwrap_err().contains("`--eager maybe`"));
+        assert!(maybe.unbuilt_flag().is_some_and(|it| it.contains("`on` or `off`")));
+        assert!(build("build", "--eager").compilation().is_err());
     }
 }

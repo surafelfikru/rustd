@@ -27,7 +27,7 @@ use std::os::unix::net::UnixStream;
 #[cfg(windows)]
 use uds_windows::UnixStream;
 
-use super::{plan::Plan, units::stamp_of};
+use super::{Compilation, plan::Plan, units::stamp_of};
 use crate::socket::{self, NotServed, Served, private_dir, private_file, read_request};
 
 /// How long the daemon and each worker live without being asked, unless
@@ -140,6 +140,18 @@ pub(crate) struct WorkerConfig {
     pub(crate) selection: crate::plan::Selection,
     /// The variables the worker runs with that decide what it compiles and with what.
     pub(crate) env: BTreeMap<String, String>,
+    /// Whether the worker builds lazily. Left out of an eager worker's config, so that its
+    /// id, and the state written before lazy builds existed, are what they were.
+    #[serde(default = "eager", skip_serializing_if = "is_eager")]
+    pub(crate) compilation: Compilation,
+}
+
+fn eager() -> Compilation {
+    Compilation::Eager
+}
+
+fn is_eager(compilation: &Compilation) -> bool {
+    *compilation == Compilation::Eager
 }
 
 impl WorkerConfig {
@@ -160,6 +172,10 @@ impl WorkerConfig {
         }
         if self.selection.dev_deps {
             args.push("--dev-deps".into());
+        }
+        if self.compilation == Compilation::Lazy {
+            // The table of stubs names the build, for a stub to find this worker by.
+            args.extend(["--lazy".into(), "--build-id".into(), self.id().into()]);
         }
         for krate in crates {
             args.push("--crate".into());
@@ -957,4 +973,55 @@ impl Daemon {
 /// statements here.
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(compilation: Compilation) -> WorkerConfig {
+        WorkerConfig {
+            repository: PathBuf::from("/ws/.git"),
+            project: PathBuf::from("app"),
+            cfg_test: false,
+            selection: crate::plan::Selection {
+                profile: "dev".to_owned(),
+                features: Vec::new(),
+                no_default_features: false,
+                all_features: false,
+                packages: Vec::new(),
+                workspace: false,
+                excludes: Vec::new(),
+                target: None,
+                dev_deps: false,
+            },
+            env: BTreeMap::new(),
+            compilation,
+        }
+    }
+
+    #[test]
+    fn a_lazy_worker_is_another_worker_and_is_told_so() {
+        let (eager, lazy) = (config(Compilation::Eager), config(Compilation::Lazy));
+        assert_ne!(eager.id(), lazy.id());
+        let args = |config: &WorkerConfig| config.args(Path::new("/ws"), &[]);
+        let lazy_args = args(&lazy);
+        let at = lazy_args.iter().position(|it| it == "--lazy").expect("--lazy");
+        assert_eq!(lazy_args[at + 1], "--build-id");
+        assert_eq!(lazy_args[at + 2], OsString::from(lazy.id()));
+        assert!(!args(&eager).iter().any(|it| it == "--lazy" || it == "--build-id"));
+    }
+
+    #[test]
+    fn an_eager_config_reads_and_hashes_as_it_did_before_lazy_builds() {
+        let eager = config(Compilation::Eager);
+        let text = serde_json::to_string(&eager).unwrap();
+        assert!(!text.contains("compilation"), "{text}");
+        let read: WorkerConfig = serde_json::from_str(&text).unwrap();
+        assert_eq!(read.compilation, Compilation::Eager);
+        let lazy: WorkerConfig =
+            serde_json::from_str(&serde_json::to_string(&config(Compilation::Lazy)).unwrap())
+                .unwrap();
+        assert_eq!(lazy.compilation, Compilation::Lazy);
+    }
 }

@@ -52,8 +52,8 @@ use hir_def::{
 };
 use hir_ty::db::InternedClosureId;
 use hir_ty::mir::codegen::{
-    Backend, CodegenError, CodegenUnit, ContentId, EagerReason, EagerSet, Lazy, LazyHost, Mode,
-    ParallelWork, Rejections, Roots, SymbolResolver, exported_symbol, functions_in_statics,
+    Backend, BuildId, CodegenError, CodegenUnit, ContentId, EagerReason, EagerSet, Lazy, LazyHost,
+    Mode, ParallelWork, Rejections, Roots, SymbolResolver, exported_symbol, functions_in_statics,
 };
 use ide_db::{ChangeWithProcMacros, RootDatabase};
 use load_cargo::{LoadCargoConfig, ProcMacroServerChoice};
@@ -112,6 +112,8 @@ struct Args {
     /// Whether every reached function is compiled, or only the eager set with a stub that
     /// aborts for each of the rest (`--lazy`).
     compilation: cargo::Compilation,
+    /// The build a daemon's lazy worker serves (`--build-id`), which its table of stubs names.
+    build_id: Option<BuildId>,
     /// Build the workspace's crates as `cargo test` does, with `cfg(test)`.
     cfg_test: bool,
     /// Run build scripts and build proc macros in a directory of rustd's own under the
@@ -198,6 +200,7 @@ impl Args {
         let mut deny = None;
         let mut isolate = None;
         let mut compilation = cargo::Compilation::Eager;
+        let mut build_id = None;
         let mut cfg_test = false;
         let mut dev_deps = false;
         let mut own_target = false;
@@ -229,6 +232,9 @@ impl Args {
                 "--deny" => deny = Some(PathBuf::from(value()?)),
                 "--isolate" => isolate = Some(PathBuf::from(value()?)),
                 "--lazy" => compilation = cargo::Compilation::Lazy,
+                "--build-id" => {
+                    build_id = Some(value()?.parse::<BuildId>().map_err(anyhow::Error::msg)?)
+                }
                 "--watch" => watch = true,
                 "--socket" => socket = Some(PathBuf::from(value()?)),
                 "--cfg-test" => cfg_test = true,
@@ -254,6 +260,9 @@ impl Args {
         if compilation == cargo::Compilation::Lazy && isolate.is_some() {
             bail!("`--isolate` builds one entry per function; lazy mode has none");
         }
+        if compilation == cargo::Compilation::Eager && build_id.is_some() {
+            bail!("`--build-id` names the build of a lazy worker, and `--lazy` is not given");
+        }
         Ok(Args {
             project: project.context("missing project path")?,
             krate: krate.context("missing --crate")?,
@@ -270,6 +279,7 @@ impl Args {
             deny,
             isolate,
             compilation,
+            build_id,
             cfg_test,
             own_target,
             selection: plan::Selection {
@@ -3173,8 +3183,8 @@ fn build(
         Some(eager) => {
             let roots = functions.iter().filter_map(|&(func, _)| Some((func, eager.reason(func)?)));
             let host = LazyHost {
-                // A daemon's worker will be told its build on the command line; none does yet.
-                build_id: None,
+                // A worker in driver mode, which no daemon started, serves no build.
+                build_id: args.build_id,
                 socket: args.socket.clone(),
                 rustd: std::env::current_exe().context("the worker's own path")?,
                 store: hir_ty::mir::codegen::store_dir(),
@@ -4096,6 +4106,7 @@ fn build_batch(db: &RootDatabase, args: Args) -> anyhow::Result<()> {
             deny: None,
             isolate: None,
             compilation: args.compilation,
+            build_id: args.build_id,
             cfg_test: args.cfg_test,
             own_target: args.own_target,
             selection: args.selection.clone(),

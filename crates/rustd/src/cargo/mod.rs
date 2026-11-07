@@ -69,6 +69,9 @@ usage: cargo rustd <command> [cargo's flags]
   stop               ends the daemon; the next build starts one
   enable, disable    plain `cargo build|run|test|check` through rustd, and back
 
+  --eager off        with build, run or test: compile only what runs before the program
+                     does, with a stub that aborts for every other function (RUSTD_LAZY=1)
+
 Any other command is cargo's own. CARGO.md is the guide.";
 
 /// Runs cargo with `args` and nothing of rustd's.

@@ -217,6 +217,7 @@ build a command line is, so changing one starts from a first build again.
 | `RUSTD_OPT` | LLVM optimisation level, 0 to 3. Functions are still compiled one at a time | 2 |
 | `RUSTD_EMIT` | LLVM instruction selection: `optimized` or `fast` | `optimized`; `fast` at level 0 |
 | `RUSTD_SPLICE` | `0` links in full after every edit instead of splicing | splice |
+| `RUSTD_LAZY` | `1` makes a lazy build, which `--eager off` asks for too and `--eager on` overrides. Only the eager set is compiled: `main`, exported, `extern "C"` and `#[link_section]` functions, ones with `asm!`, lang items, the tests the harness calls, and functions a `#[used]` static points at. Every other function the program reaches is a 16-byte stub that aborts with `SIGILL` when called, and the object has a `.rustd.lazy` table of the stubs. It measures what compiling on first call would save, and is no program to ship. A patch after an edit is a full lazy build again. ELF targets only. `#[panic_handler]` is not in the eager set | `0` |
 
 These are read by the daemon when it starts, from the environment of whichever command
 started it. To change one, run `cargo rustd stop` first.

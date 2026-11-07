@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     Request, Start,
-    cli::{Invocation, Subcommand, worker_env},
+    cli::{Compilation, Invocation, Subcommand, worker_env},
     client,
     daemon::{self, Checkout, WorkerConfig},
     package,
@@ -335,6 +335,8 @@ impl Staged {
                 cfg_test: false,
                 selection: asked.selection(),
                 env: worker_env(),
+                // A value that is neither was refused before anything was built.
+                compilation: asked.compilation().unwrap_or(Compilation::Eager),
             };
             daemon::Ahead { config, crates: roots.clone(), root }
         });
@@ -645,6 +647,7 @@ impl State {
             cfg_test: unit_test,
             selection: asked.selection(),
             env: worker_env(),
+            compilation: asked.compilation().unwrap_or(Compilation::Eager),
         };
         let sysroot_libraries = sysroot_libraries();
         let checkout = |unit_test: bool| Checkout {
