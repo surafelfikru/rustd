@@ -27,6 +27,13 @@ After every first build the program is run from its executable: with its version
 times (time to `main`, the median), and with its representative arguments twice (the first
 and the second run), and its output has to equal the cargo-built program's.
 
+With `RUSTD_LAZY=1` the rustd side is a lazy build (only the eager set compiled, a stub that
+aborts for every other function) and the result goes to `baseline-lazy.json` and
+`BASELINE-lazy.md`. Only the rustd side is built, as cargo's numbers stand in baseline.json,
+except for hello, whose output still has to equal cargo's; the other programs may die in a
+stub, and their exit is recorded as `lazy_exit`. The report sets the lazy build beside the
+eager one and cargo's from baseline.json: the ceiling of compiling on first call.
+
 Everything runs under `taskset -c 0-3` (the script pins itself) with the user's `jobs = 4`.
 Writes `baseline.json` and `BASELINE.md` next to this file, or where `--out` says.
 """
@@ -48,6 +55,8 @@ CRATES_OF_GENWS = 100
 # The large subjects take long enough that fewer runs are what fits a session: genws 200
 # compiles 50,554 functions in about nine minutes per cold build.
 FEWER_RUNS = {"nushell": 3, "cargo": 3, "genws": 1}
+# A lazy build: only the eager set compiled, a stub for every other function.
+LAZY = os.environ.get("RUSTD_LAZY") == "1"
 
 
 def body(file, opening):
@@ -117,7 +126,9 @@ def environment(work, name):
     `PATH` and as `CARGO`, sccache off, the daemon's statistics on."""
     env = cargo_rustd.base_env(os.path.join(work, f"home-{name}"))
     cargo = real_cargo()
-    env["PATH"] = os.path.dirname(cargo) + os.pathsep + env["PATH"]
+    # The rustd measured comes first even so: `cargo rustd` is the `cargo-rustd` next to it, never
+    # one installed beside the toolchain's cargo.
+    env["PATH"] = os.pathsep.join([os.path.dirname(RUSTD), os.path.dirname(cargo), env["PATH"]])
     env.update(CARGO=cargo, RUSTD_BACKEND="cranelift", RUSTD_STATS="1", RUSTC_WRAPPER="")
     return env
 
@@ -226,8 +237,20 @@ def first_build_steps(texts):
         found = [f for f in re.findall(pattern, text, re.M) if bench.DURATION.search(f)]
         if found:
             steps[name] = round(sum(bench.seconds(f) for f in found), 3)
+    # The worker's own phases: the roots, then within the compile the stubs of a lazy build and
+    # writing the object.
+    roots = re.search(r"^roots: (\S+), revalidate", text, re.M)
+    if roots and bench.DURATION.search(roots[1]):
+        steps["roots"] = round(bench.seconds(roots[1]), 3)
+    for name in ("stubs", "object"):
+        found = re.findall(r"^phases: .*\b%s (\S+?)," % name, text, re.M)
+        if found:
+            steps[name] = round(sum(bench.seconds(f) for f in found), 3)
     counted = re.search(r"^cold: compiled (\d+) of (\d+) fns \(\+(\d+) instances\)", text, re.M)
     counts = dict(compiled=int(counted[1]), of=int(counted[2]), instances=int(counted[3])) if counted else {}
+    stubbed = re.search(r"^stubbed (\d+) fns$", text, re.M)
+    if stubbed:
+        counts["stubbed"] = int(stubbed[1])
     counts["left_to_rustc"] = len(re.findall(r"left to rustc", text))
     return steps, counts
 
@@ -258,6 +281,8 @@ class Measured:
     def __init__(self, name, spec, ws, edits, env, runs):
         self.name, self.spec, self.ws, self.edits, self.env, self.runs = name, spec, ws, edits, env, runs
         self.ours, self.theirs = Side(ws, env, True), Side(ws, env, False)
+        # Beside a lazy build, the eager one of the same rustd, so the two differ in the mode alone.
+        self.eager = Side(ws, dict(env, RUSTD_LAZY="0"), True)
         self.logs, self.daemon = Logs(env["RUSTD_HOME"]), bench.Daemon(self.ours)
         self.members = members(ws, env)
         self.events, self.wrong, self.daemon_version = {}, [], None
@@ -311,7 +336,7 @@ class Measured:
             self.wrong.append(f"{self.name}: the {'rustd' if side.rustd else 'cargo'} build failed: {ran.stderr[-300:]!r}")
         return sample
 
-    def run_program(self, side, ws=None):
+    def run_program(self, side, ws=None, lazy=False):
         """Time to `main` (the median of five runs with the version flag), the representative
         run twice, and what it printed."""
         exe = self.executable(side, ws)
@@ -321,8 +346,12 @@ class Measured:
         versions = [cargo_rustd.timed([exe, *self.spec["version"]], cwd, self.env)[0] for _ in range(VERSION_RUNS)]
         first, ran = cargo_rustd.timed([exe, *self.spec["run"]], cwd, self.env)
         second, _ = cargo_rustd.timed([exe, *self.spec["run"]], cwd, self.env)
-        return dict(main_ms=round(1000 * statistics.median(versions), 1), run1_s=round(first, 3), run2_s=round(second, 3),
-                    output=(ran.returncode, cleaned(ran.stdout), cleaned(ran.stderr)))
+        program = dict(main_ms=round(1000 * statistics.median(versions), 1), run1_s=round(first, 3), run2_s=round(second, 3),
+                       output=(ran.returncode, cleaned(ran.stdout), cleaned(ran.stderr)))
+        if lazy:
+            # A stub aborts with SIGILL: the exit says whether the run got past every one.
+            program["lazy_exit"] = ran.returncode
+        return program
 
     def compare(self, label, mine, theirs):
         """Whether the two programs said the same; the difference is recorded."""
@@ -337,7 +366,14 @@ class Measured:
     def first_builds(self, event):
         """The event's builds, interleaved, one warm-up then `runs` samples per side."""
         samples = []
-        sides = [self.ours] if event == "store" else [self.ours, self.theirs]
+        # A lazy build is set against the eager build of the same rustd, and against cargo's
+        # numbers in baseline.json; hello's output is still compared, as nothing of it is a stub.
+        if event == "store":
+            sides = [("rustd", self.ours)]
+        elif LAZY:
+            sides = [("rustd", self.ours), ("eager", self.eager)] + ([("cargo", self.theirs)] if self.name == "hello" else [])
+        else:
+            sides = [("rustd", self.ours), ("cargo", self.theirs)]
         env = None
         if event == "sccache":
             env = {k: v for k, v in self.env.items() if k != "RUSTC_WRAPPER"}
@@ -346,17 +382,16 @@ class Measured:
             runs = self.runs
         for turn in range(runs + 1):
             row = dict(turn=turn, warmup=turn == 0)
-            for side in sides:
-                name = "rustd" if side.rustd else "cargo"
+            for name, side in sides:
                 self.reset(event, side)
                 stats = sccache_stats(env) if event == "sccache" else None
                 row[name] = self.build(side, env=env)
                 if stats:
                     after = sccache_stats(env)
                     row[name]["sccache"] = {k: (after[k] - stats[k]) if after[k] is not None and stats[k] is not None else None for k in stats}
-                row[name]["program"] = self.run_program(side)
+                row[name]["program"] = self.run_program(side, lazy=LAZY and name == "rustd")
                 self.stop()
-            if event != "store":
+            if "cargo" in row:
                 row["same_output"] = self.compare(f"{event} {turn}", row["rustd"]["program"], row["cargo"]["program"])
             samples.append(row)
             self.say(event, row)
@@ -454,7 +489,8 @@ class Measured:
             return
         mine, theirs = row.get("rustd", {}), row.get("cargo", {})
         steps = mine.get("steps_s", {})
-        print(f"  {event:9} run {row['turn']}{'w' if row['warmup'] else ' '} rustd {mine.get('wall_s', 0):8.3f}s  cargo {theirs.get('wall_s', 0):8.3f}s  "
+        eager = f"eager {row['eager'].get('wall_s', 0):8.3f}s  stubbed {row['rustd'].get('counts', {}).get('stubbed', 0)}  " if "eager" in row else ""
+        print(f"  {event:9} run {row['turn']}{'w' if row['warmup'] else ' '} rustd {mine.get('wall_s', 0):8.3f}s  {eager}cargo {theirs.get('wall_s', 0):8.3f}s  "
               f"spare {steps.get('spare', 0):5.1f} load {steps.get('load', 0):5.1f} compile {steps.get('compile', 0):5.1f} link {steps.get('link', 0):5.2f}  "
               f"fns {mine.get('counts', {}).get('compiled', '?')}  rss {mine.get('rss_mb', '?')} MB  main {mine.get('program', {}).get('main_ms', '?')} ms  "
               f"{mine.get('built', '')[:40]}  {'same' if row.get('same_output', True) else 'DIFFERENT'}", flush=True)
@@ -471,7 +507,7 @@ def context(runs, events):
                 memory_gb=round(int(memory[1]) / 2**20, 1) if memory else None, kernel=platform.release(), python=platform.python_version(),
                 cargo=real_cargo(), cargo_config=open(config).read() if os.path.exists(config) else None,
                 backend="cranelift", sccache_off_except="sccache event", runs=runs, fewer_runs=FEWER_RUNS, events=events,
-                env=dict(RUSTD_STATS="1", RUSTC_WRAPPER="", RUSTD_BACKEND="cranelift"))
+                env=dict(RUSTD_STATS="1", RUSTC_WRAPPER="", RUSTD_BACKEND="cranelift", RUSTD_LAZY="1" if LAZY else "0"))
 
 
 def medians(samples, side, key, inner=None):
@@ -530,9 +566,38 @@ def table(result):
                 out.append(f"| {name} | {kind} | {p['cargo_s']:.3f} | {p['rustd_s']:.3f} | {p.get('samples')} | {p.get('link') or ''} | {p.get('reloaded', '')} | {p.get('compiled', '')} | "
                            f"{p.get('back_cargo_s', '')} / {p.get('back_rustd_s', '')} |")
         out.append("")
+    if result["context"]["env"].get("RUSTD_LAZY") == "1":
+        out += ceiling(result)
     wrong = [f"- {w}" for r in result["results"].values() for w in r["wrong"]]
     out += ["## Differences and failures", ""] + (wrong or ["none"]) + [""]
     return "\n".join(out)
+
+
+def ceiling(result):
+    """The lazy `deps` builds beside the eager ones and cargo's of baseline.json."""
+    stage1 = json.load(open(os.path.join(HERE, "baseline.json")))["results"]
+    out = ["## Ceiling: the lazy first build with the dependencies built", "",
+           "Cargo and the eager rustd build are stage 1's (`baseline.json`); the lazy build compiles the eager set and stubs "
+           "every other function the program reaches, so its time is the least a build that compiles on first call can take "
+           "before the program runs. The eager build beside it is of the same rustd, built in turn with it; stage 1's is of the "
+           "rustd it measured. `lazy exit` is the representative run's: -4 is a stub reached.", "",
+           "| Subject | cargo (stage 1) | rustd eager (stage 1) | rustd eager | rustd lazy | saved | roots | compile | of which stubs | object | link | eager fns (+instances) | lazy fns (+instances) | stubbed | lazy exit |",
+           "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    for name, r in result["results"].items():
+        samples = r["events"].get("deps")
+        eager = stage1.get(name, {}).get("events", {}).get("deps")
+        if not samples:
+            continue
+        lazy_wall, eager_wall = medians(samples, "rustd", "wall_s"), medians(samples, "eager", "wall_s")
+        stage1_wall, cargo_wall = eager and medians(eager, "rustd", "wall_s"), eager and medians(eager, "cargo", "wall_s")
+        steps = lambda key: fmt(medians(samples, "rustd", key, "steps_s"))
+        count = lambda rows, key, side="rustd": max((row[side].get("counts", {}).get(key, 0) for row in rows or [] if side in row), default=0)
+        exits = sorted({row["rustd"].get("program", {}).get("lazy_exit") for row in samples if "rustd" in row} - {None})
+        saved = f"{eager_wall['median'] - lazy_wall['median']:.2f}" if lazy_wall and eager_wall else ""
+        out.append(f"| {name} | {fmt(cargo_wall)} | {fmt(stage1_wall)} | {fmt(eager_wall)} | {fmt(lazy_wall)} | {saved} | {steps('roots')} | {steps('compile')} | "
+                   f"{steps('stubs')} | {steps('object')} | {steps('link')} | {count(samples, 'compiled', 'eager')} (+{count(samples, 'instances', 'eager')}) | "
+                   f"{count(samples, 'compiled')} (+{count(samples, 'instances')}) | {count(samples, 'stubbed')} | {', '.join(map(str, exits))} |")
+    return out + [""]
 
 
 def main():
@@ -541,7 +606,7 @@ def main():
     runs = int(bench.options(argv, "--runs", "5")[0])
     events = bench.options(argv, "--events", ",".join(EVENTS))[0].split(",")
     work = os.path.expanduser((bench.options(argv, "--work") or [None])[0] or "~/rustd-bench/work")
-    out = bench.options(argv, "--out", os.path.join(HERE, "baseline.json"))[0]
+    out = bench.options(argv, "--out", os.path.join(HERE, "baseline-lazy.json" if LAZY else "baseline.json"))[0]
     keep = "--keep" in argv
     names = [a for a in argv if not a.startswith("--")] or list(SUBJECTS)
     unknown = [e for e in events if e not in EVENTS] + [n for n in names if n not in SUBJECTS]
