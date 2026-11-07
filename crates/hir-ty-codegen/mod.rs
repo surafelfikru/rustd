@@ -595,6 +595,7 @@ impl CodegenUnit {
                 hydrate,
             )?;
             cg.patching = patching;
+            cg.mode = mode;
             let mut compiled = Vec::new();
             let mut stubbed = Vec::new();
             let mut skipped = Vec::new();
@@ -1148,6 +1149,8 @@ struct ObjectCodegen<'a, 'db> {
     forwarded: FxHashSet<Instance>,
     /// Whether instances and statics get names another object can refer to.
     patching: bool,
+    /// Whether the roots outside the eager set are stubs, which name nothing to compile.
+    mode: Mode<'a>,
     /// The object this one is a patch for, and what of it is no longer what the source says.
     base: Option<&'a patch::Base>,
     replaced: patch::Unchanged,
@@ -3355,6 +3358,7 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
             ahead: FxHashSet::default(),
             forwarded: FxHashSet::default(),
             patching: false,
+            mode: Mode::Eager,
             base,
             replaced: Default::default(),
             own_static_order: Vec::new(),
@@ -3695,7 +3699,13 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
         let entries = entries.as_deref();
         let told = self.debug.is_some().then(|| self.told.clone());
         let told = told.as_ref();
-        let on_demand = self.on_demand;
+        // A root compiled only when called is compiled here for the thread that puts its
+        // caller in the object. In lazy mode such a root is a stub, so naming it asks for
+        // nothing: neither its body nor what it calls.
+        let on_demand = match self.mode {
+            Mode::Eager => Some(self.on_demand),
+            Mode::Lazy(_) => None,
+        };
         let work = |db: &dyn HirDatabase, symbols: &dyn SymbolResolver, _: usize| {
             let mut types = OwnTypes::default();
             let names = stable::StableNames::new(db, symbols, owned.clone(), hydrate);
@@ -3761,7 +3771,7 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
                         {
                             // One compiled only when called is, by the thread that puts
                             // its caller in the object: it is compiled for it here.
-                            if on_demand.contains(&func) {
+                            if on_demand.is_some_and(|it| it.contains(&func)) {
                                 called.push(func);
                             }
                             symbols.function(func).is_some()

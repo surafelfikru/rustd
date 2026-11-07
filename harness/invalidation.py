@@ -226,7 +226,7 @@ def main():
             log.seek(0)
             text = log.read()
             builds = re.findall(
-                r"edit \(apply (\S+)\): compiled (\d+) of (\d+) fns \(\+(\d+) instances\) in (\S+) .*\n(?:   .*\n)*stats: (\d+) of (\d+) functions compiled, \d+ reused\n(?:(?:no )?patch: .*\n)?phases: compile (\S+), resolve (\S+), define (\S+), (?:fallback \S+, )?object (\S+), \d+ rounds\n(?:link: (\S+) .*\n)?(?:timeline-us: .*\n)?edit-to-binary: (\S+)",
+                r"edit \(apply (\S+)\): compiled (\d+) of (\d+) fns \(\+(\d+) instances\) in (\S+) .*\n(?:   .*\n)*stats: (\d+) of (\d+) functions compiled, \d+ reused\n(?:(?:no )?patch: .*\n)?phases: compile (\S+), resolve (\S+), define (\S+), (?:stubs \S+, )?(?:fallback \S+, )?object (\S+), \d+ rounds\n(?:link: (\S+) .*\n)?(?:timeline-us: .*\n)?edit-to-binary: (\S+)",
                 text)[before:edits]
             apply = sum(millis(b[0]) for b in builds)
             total = sum(millis(b[4]) for b in builds)

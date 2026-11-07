@@ -5459,7 +5459,7 @@ fn run_holding(mut args: Args, held: Option<Held>, ahead: bool) -> anyhow::Resul
     eprint!("cold: ");
     report(&cold);
     memory::report(&mut db, "build")?;
-    report_stats(&known.stats);
+    report_stats(&known.stats, args.compilation);
     link(
         args.link_cmd.as_deref(),
         args.splice.as_deref(),
@@ -6629,7 +6629,7 @@ impl Program {
         let built = start.elapsed();
         eprint!("edit (apply {apply:.1?}): ");
         report(&warm);
-        report_stats(&known.stats);
+        report_stats(&known.stats, args.compilation);
         let reported = start.elapsed();
         let out_of_date = hir::attach_db(db, || known.out_of_date(db));
         let mut failed = unnamed
@@ -6733,7 +6733,7 @@ fn abs(path: &Path) -> anyhow::Result<VfsPath> {
     Ok(VfsPath::from(AbsPathBuf::assert_utf8(dunce::canonicalize(path)?)))
 }
 
-fn report_stats(stats: &hir_ty::mir::codegen::BuildStats) {
+fn report_stats(stats: &hir_ty::mir::codegen::BuildStats, compilation: cargo::Compilation) {
     if stats.bodies == 0 {
         return;
     }
@@ -6748,16 +6748,15 @@ fn report_stats(stats: &hir_ty::mir::codegen::BuildStats) {
         eprintln!("no patch: {why}");
     }
     let phases = stats.phases;
+    // Only a lazy build has a stubs phase; the eager line stays as the harness reads it.
+    let stubs = match compilation {
+        cargo::Compilation::Eager => String::new(),
+        cargo::Compilation::Lazy => format!("stubs {:.1?}, ", phases.stubs),
+    };
     eprintln!(
-        "phases: compile {:.1?}, resolve {:.1?}, define {:.1?}, stubs {:.1?}, fallback {:.1?}, \
+        "phases: compile {:.1?}, resolve {:.1?}, define {:.1?}, {stubs}fallback {:.1?}, \
          object {:.1?}, {} rounds",
-        phases.compile,
-        phases.resolve,
-        phases.define,
-        phases.stubs,
-        phases.fallback,
-        phases.object,
-        stats.rounds
+        phases.compile, phases.resolve, phases.define, phases.fallback, phases.object, stats.rounds
     );
 }
 
