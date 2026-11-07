@@ -2205,6 +2205,35 @@ fn compiled_static<'db>(db: &'db dyn HirDatabase, id: StaticId) -> Result<Compil
     Ok(CompiledStatic { requests: cg.finish().0, blob, writable })
 }
 
+/// The signature a non-generic function is declared with by what calls it or takes its
+/// address, from its declaration alone: the body is never lowered. A lazy build defines
+/// the function's stub with it, and because the callers compute theirs by the same
+/// method ([`FunctionCx::declared_signature`]) the two cannot drift apart.
+#[salsa::tracked(returns(ref))]
+fn root_signature<'db>(db: &'db dyn HirDatabase, func: FunctionId) -> Result<Signature> {
+    let krate = func.krate(db);
+    let checked = crate_checks_overflow(db, krate).unwrap_or(false);
+    let mut cg = Recorder::new(db, &**target()?, selected_target()?, checked);
+    let env = ParamEnvAndCrate { param_env: crate::next_solver::ParamEnv::empty(), krate };
+    let mut signature = None;
+    build(&mut cg, env, None, false, |fx| {
+        let interner = fx.interner;
+        // A root has no generic parameters but lifetimes, which calls erase.
+        let mut generic = false;
+        let args = GenericArgs::fill_rest(interner, func.into(), [], |_, id, _| {
+            generic |= !matches!(id, hir_def::GenericParamId::LifetimeParamId(_));
+            Region::new_erased(interner).into()
+        });
+        if generic {
+            unsupported!("the signature of a generic function without its arguments");
+        }
+        let fn_ty = Ty::new_fn_def(interner, CallableDefId::FunctionId(func).into(), args);
+        signature = Some(fx.declared_signature(func, fn_ty)?);
+        Ok(())
+    })?;
+    Ok(signature.expect("`build` ran the closure"))
+}
+
 /// What the threads that compile ahead have to do and have done.
 struct Ahead {
     /// Compiled functions whose calls are still to be looked through.
@@ -3523,6 +3552,17 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
         let took = start.elapsed();
         self.phases.compile += took;
         let compiled = compiled.as_ref().map_err(Clone::clone)?;
+        // A lazy build declares the function's stub with `root_signature`, which has to be
+        // what the body was compiled with for the stub to stand in for it.
+        #[cfg(debug_assertions)]
+        {
+            let declared = root_signature(db, func);
+            debug_assert!(
+                declared.as_ref().is_ok_and(|sig| *sig == compiled.code.signature),
+                "`{symbol}` was compiled with the signature {:?} but its callers declare it with {declared:?}",
+                compiled.code.signature
+            );
+        }
         let id =
             self.module.declare_function(&symbol, Linkage::Export, &compiled.code.signature)?;
         self.shape_origin(id, InstanceDef::Fn(func), &func, false, took);
@@ -3545,11 +3585,7 @@ impl<'a, 'db> ObjectCodegen<'a, 'db> {
             let private = self.on_demand_crates.is_empty() && self.symbols.private(func);
             return Err(if private { CodegenError::Private } else { CodegenError::NoSymbol });
         };
-        // FIXME(M1 step 2): the signature is to come from `root_signature`, the callers'
-        // recipe over the declaration, without the body. Until then the compiled root's
-        // stands in, which lowers and compiles the body the stub is there to spare.
-        let compiled = compiled_root(db, func).as_ref().map_err(Clone::clone)?;
-        let signature = compiled.code.signature.clone();
+        let signature = root_signature(db, func).as_ref().map_err(Clone::clone)?.clone();
         let id = self.module.declare_function(&symbol, Linkage::Export, &signature)?;
         let index =
             self.stubs.push(StubRow { func, symbol: symbol.clone(), name: None, key: None })?;
@@ -9830,11 +9866,31 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
         if track_caller(db, callee) {
             return self.reified(fn_ty, false);
         }
+        let sig = self.declared_signature(callee, fn_ty)?;
+        self.cg.callee(InstanceDef::Fn(callee), callee_args, self.env, &sig)
+    }
+
+    /// The signature `func` is declared with by a call or an address taken of it, from the
+    /// fn item type `fn_ty` names it as: its erased signature's convention over its inputs
+    /// and output, then what [`Self::signature_of`] adds. The stub a lazy build puts in
+    /// place of a root is declared with this too (`root_signature`), so the stub and every
+    /// importer agree without the body.
+    fn declared_signature(&self, func: FunctionId, fn_ty: Ty<'db>) -> Result<Signature> {
         let sig = self.interner.instantiate_bound_regions_with_erased(fn_ty.fn_sig(self.interner));
         let abi = self.fn_abi(sig.abi(), sig.output(), sig.inputs().iter().copied())?;
+        self.signature_of(func, &abi)
+    }
+
+    /// The signature `func` is declared with when its named arguments and result pass as
+    /// `abi` says: a pointer to the caller's location after the arguments when it tracks
+    /// its caller, and the `...` of a variadic function compiled here.
+    fn signature_of(&self, func: FunctionId, abi: &FnAbi) -> Result<Signature> {
         let mut sig = self.signature(&abi.args, abi.ret);
-        self.declare_variadic(callee, &mut sig)?;
-        self.cg.callee(InstanceDef::Fn(callee), callee_args, self.env, &sig)
+        if track_caller(self.cg.db, func) {
+            sig.params.push(AbiParam::new(ptr()));
+        }
+        self.declare_variadic(func, &mut sig)?;
+        Ok(sig)
     }
 
     /// Makes `sig`, of the named parameters of `func`, the one `func` is defined with when it
@@ -11338,10 +11394,12 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
             let def = CallableDefId::FunctionId(callee).into();
             return self.reified(Ty::new_fn_def(interner, def, callee_args), false);
         }
-        let mut sig = self.body_signature(body)?;
-        if track_caller(db, callee) {
-            sig.params.push(AbiParam::new(ptr()));
-        }
+        let abi = self.fn_abi(
+            ExternAbi::Rust,
+            body.returned.as_ref(),
+            body.params.iter().map(|ty| ty.as_ref()),
+        )?;
+        let sig = self.signature_of(callee, &abi)?;
         self.cg.callee(InstanceDef::Fn(callee), callee_args, self.env, &sig)
     }
 
@@ -11999,24 +12057,17 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
             Callee::Instance(..) => ExternAbi::Rust,
             Callee::Pointer(_, abi, _) => abi,
         };
-        let FnAbi { ret: ret_mode, args: arg_modes } =
-            self.fn_abi(abi, dst_ty, args.iter().map(|&(_, ty)| ty))?;
+        let abi = self.fn_abi(abi, dst_ty, args.iter().map(|&(_, ty)| ty))?;
+        let ret_mode = abi.ret;
         let mut values = Vec::new();
         if let PassMode::Indirect = ret_mode {
             values.push(dst);
         }
         // The calls before this one have returned.
         self.free_argument_slots.append(&mut self.argument_slots);
-        for (&(addr, ty), &mode) in args.iter().zip(&arg_modes) {
+        for (&(addr, ty), &mode) in args.iter().zip(&abi.args) {
             let layout = self.layout(ty)?;
             self.pass(mode, addr, &layout, &mut values);
-        }
-        let mut sig = self.signature(&arg_modes, ret_mode);
-        if let Callee::Instance(InstanceDef::Fn(func), _) = callee
-            && track_caller(self.cg.db, func)
-        {
-            sig.params.push(AbiParam::new(ptr()));
-            values.push(self.caller_location()?);
         }
         // How many of the arguments are for named parameters, when the rest are for `...`.
         let named = match callee {
@@ -12028,8 +12079,21 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
             Callee::Pointer(_, _, named) => named,
         };
         let Some(named) = named else {
+            // A named function is called as it is declared, with its caller's location
+            // after the arguments when it tracks its caller.
+            let sig = match callee {
+                Callee::Instance(InstanceDef::Fn(func), _) => {
+                    if track_caller(self.cg.db, func) {
+                        values.push(self.caller_location()?);
+                    }
+                    self.signature_of(func, &abi)?
+                }
+                Callee::Instance(..) | Callee::Pointer(..) => self.signature(&abi.args, ret_mode),
+            };
             return self.call_as(callee, sig, &values, ret_mode, dst, &ret_layout);
         };
+        let arg_modes = abi.args;
+        let mut sig = self.signature(&arg_modes, ret_mode);
         if Target::current().is_wasm() {
             // The arguments after the named ones are written to memory, each at its
             // own alignment, and the function is given where.
@@ -12061,6 +12125,7 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
         }
         // Each call of a variadic function has a signature of its own, and the
         // function is declared with the one of its named parameters.
+        let named_args = named;
         let named = arg_modes[..named]
             .iter()
             .map(|&mode| {
@@ -12072,11 +12137,17 @@ impl<'cx, 'db> FunctionCx<'cx, 'db> {
             + usize::from(matches!(ret_mode, PassMode::Indirect));
         let mut pointer = match callee {
             Callee::Instance(def, generic_args) => {
-                let mut declared = sig.clone();
-                declared.params.truncate(named);
-                if let InstanceDef::Fn(func) = def {
-                    self.declare_variadic(func, &mut declared)?;
-                }
+                let declared = match def {
+                    InstanceDef::Fn(func) => {
+                        let named = FnAbi { ret: ret_mode, args: arg_modes[..named_args].to_vec() };
+                        self.signature_of(func, &named)?
+                    }
+                    _ => {
+                        let mut declared = sig.clone();
+                        declared.params.truncate(named);
+                        declared
+                    }
+                };
                 let callee = self.cg.callee(def, generic_args, self.env, &declared)?;
                 let callee = self.cg.declare_func_address_in_func(callee, self.builder.func);
                 self.builder.ins().func_addr(ptr(), callee)
