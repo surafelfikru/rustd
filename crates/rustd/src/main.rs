@@ -3142,15 +3142,25 @@ fn build(
         }
     }
     let list = start.elapsed();
-    // With a program to start from, only what it reaches is compiled, and what a runtime
-    // looks up by name. Without one any function may be the one called. In lazy mode the
-    // eager set is compiled too, and every other root is a stub.
+    let start_from = match main {
+        Some(main) => Start::Main(main),
+        None if args.cfg_test => Start::Harness,
+        None => Start::None,
+    };
+    // What a runtime looks up by name is compiled whatever the program; the rest depends on
+    // what the program starts from.
     let (entries, on_demand): (Vec<_>, Vec<_>) =
         functions.iter().copied().partition(|&(func, exported)| {
             exported
-                || main.is_none()
-                || main == Some(func)
-                || eager.as_ref().is_some_and(|eager| eager.contains(func))
+                || match (&eager, start_from) {
+                    // Only what `main` reaches is compiled.
+                    (None, Start::Main(main)) => main == func,
+                    // Any function may be the one called: every one is compiled.
+                    (None, Start::Harness | Start::None) | (Some(_), Start::None) => true,
+                    // The eager set is compiled too, with `main` or the tests the harness
+                    // calls by name in it, and every other root is a stub.
+                    (Some(eager), Start::Main(_) | Start::Harness) => eager.contains(func),
+                }
         });
     let unzip = |it: Vec<(FunctionId, bool)>| it.into_iter().map(|it| it.0).collect::<Vec<_>>();
     let (entries, on_demand) = (unzip(entries), unzip(on_demand));
@@ -4318,6 +4328,17 @@ fn harness_tests(db: &RootDatabase, resolver: &Resolver<'_>, own: &[Crate]) -> V
         }
     }
     tests
+}
+
+/// What a build's program starts from, which decides what is compiled before it runs.
+#[derive(Clone, Copy)]
+enum Start {
+    /// The crate's `main`.
+    Main(FunctionId),
+    /// rustc's test harness, which calls each test by its name.
+    Harness,
+    /// No program, as for a library built alone.
+    None,
 }
 
 /// The harness of a test executable whose own crates are `own`: a `#[test]` for each test
