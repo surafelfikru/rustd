@@ -1,0 +1,3334 @@
+{
+ "context": {
+  "date": "2026-11-07T22:31:24+03:00",
+  "toolchain": "1.99.0",
+  "rustd_bin": "/home/sura/repo/oss/rustd/target/release/rustd",
+  "harness_commit": "42d25345d4",
+  "cpu": "Intel(R) Core(TM) Ultra 7 155H",
+  "cores": "0-3",
+  "logical_cpus": 22,
+  "memory_gb": 15.0,
+  "kernel": "7.2.7-arch1-1",
+  "python": "3.14.2",
+  "cargo": "/home/sura/.cargo/bin/cargo",
+  "cargo_config": "[build]\nrustc-wrapper = \".cargo/bin/sccache\"\njobs = 4\n\n[target.x86_64-unknown-linux-gnu]\nlinker = \"clang\"\nrustflags = [\"-C\", \"link-arg=-fuse-ld=mold\"]\n\n",
+  "backend": "cranelift",
+  "sccache_off_except": "sccache event",
+  "runs": 5,
+  "fewer_runs": {
+   "nushell": 3,
+   "cargo": 3,
+   "genws": 1
+  },
+  "events": [
+   "deps"
+  ],
+  "env": {
+   "RUSTD_STATS": "1",
+   "RUSTC_WRAPPER": "",
+   "RUSTD_BACKEND": "cranelift",
+   "RUSTD_LAZY": "1"
+  }
+ },
+ "results": {
+  "hello": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 6.117,
+       "built": "daemon",
+       "load": 2.3,
+       "mem_available_mb": 5325,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.369,
+        "resolve": 1.5,
+        "compile": 0.974,
+        "emit": 0.0,
+        "link": 0.038,
+        "spare": 3.1,
+        "spare_add": 0.365,
+        "entries": 0.003,
+        "roots": 0.003,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1179,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 5.93,
+       "built": "daemon",
+       "load": 2.84,
+       "mem_available_mb": 5343,
+       "warm_s": 0.029,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.343,
+        "resolve": 1.5,
+        "compile": 0.898,
+        "emit": 0.0,
+        "link": 0.057,
+        "spare": 3.0,
+        "spare_add": 0.339,
+        "entries": 0.0,
+        "roots": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1179,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.143,
+       "built": "cargo",
+       "load": 3.17,
+       "mem_available_mb": 5348,
+       "program": {
+        "main_ms": 1.0,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 5.925,
+       "built": "daemon",
+       "load": 3.17,
+       "mem_available_mb": 5357,
+       "warm_s": 0.035,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.372,
+        "resolve": 1.5,
+        "compile": 0.916,
+        "emit": 0.0,
+        "link": 0.051,
+        "spare": 3.0,
+        "spare_add": 0.367,
+        "entries": 0.004,
+        "roots": 0.004,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 6.491,
+       "built": "daemon",
+       "load": 2.99,
+       "mem_available_mb": 5381,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.365,
+        "resolve": 1.4,
+        "compile": 1.3,
+        "emit": 0.0,
+        "link": 0.048,
+        "spare": 3.2,
+        "spare_add": 0.361,
+        "entries": 0.0,
+        "roots": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.146,
+       "built": "cargo",
+       "load": 3.07,
+       "mem_available_mb": 5400,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 5.789,
+       "built": "daemon",
+       "load": 3.07,
+       "mem_available_mb": 5369,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.281,
+        "resolve": 1.5,
+        "compile": 0.904,
+        "emit": 0.0,
+        "link": 0.053,
+        "spare": 2.9,
+        "spare_add": 0.278,
+        "entries": 0.004,
+        "roots": 0.004,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 5.997,
+       "built": "daemon",
+       "load": 2.99,
+       "mem_available_mb": 5335,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.359,
+        "resolve": 1.5,
+        "compile": 0.92,
+        "emit": 0.0,
+        "link": 0.055,
+        "spare": 3.0,
+        "spare_add": 0.355,
+        "entries": 0.0,
+        "roots": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.145,
+       "built": "cargo",
+       "load": 3.95,
+       "mem_available_mb": 5368,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 6.208,
+       "built": "daemon",
+       "load": 3.95,
+       "mem_available_mb": 5331,
+       "warm_s": 0.023,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.356,
+        "resolve": 1.5,
+        "compile": 0.963,
+        "emit": 0.0,
+        "link": 0.037,
+        "spare": 3.2,
+        "spare_add": 0.352,
+        "entries": 0.004,
+        "roots": 0.004,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.8,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 5.82,
+       "built": "daemon",
+       "load": 3.72,
+       "mem_available_mb": 5342,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.339,
+        "resolve": 1.5,
+        "compile": 0.741,
+        "emit": 0.0,
+        "link": 0.052,
+        "spare": 3.1,
+        "spare_add": 0.335,
+        "entries": 0.0,
+        "roots": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1181,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.144,
+       "built": "cargo",
+       "load": 3.67,
+       "mem_available_mb": 5369,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     },
+     {
+      "turn": 4,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 6.099,
+       "built": "daemon",
+       "load": 3.67,
+       "mem_available_mb": 5357,
+       "warm_s": 0.036,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.347,
+        "resolve": 1.4,
+        "compile": 0.938,
+        "emit": 0.0,
+        "link": 0.056,
+        "spare": 3.2,
+        "spare_add": 0.343,
+        "entries": 0.002,
+        "roots": 0.003,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1182,
+       "program": {
+        "main_ms": 1.0,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 5.849,
+       "built": "daemon",
+       "load": 3.53,
+       "mem_available_mb": 5355,
+       "warm_s": 0.024,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.291,
+        "resolve": 1.3,
+        "compile": 0.999,
+        "emit": 0.0,
+        "link": 0.037,
+        "spare": 3.0,
+        "spare_add": 0.287,
+        "entries": 0.0,
+        "roots": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1182,
+       "program": {
+        "main_ms": 0.8,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.139,
+       "built": "cargo",
+       "load": 3.49,
+       "mem_available_mb": 5294,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     },
+     {
+      "turn": 5,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 6.863,
+       "built": "daemon",
+       "load": 3.49,
+       "mem_available_mb": 5356,
+       "warm_s": 0.024,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.364,
+        "resolve": 1.7,
+        "compile": 0.96,
+        "emit": 0.0,
+        "link": 0.037,
+        "spare": 3.6,
+        "spare_add": 0.358,
+        "entries": 0.002,
+        "roots": 0.003,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1182,
+       "program": {
+        "main_ms": 0.8,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ],
+        "lazy_exit": 0
+       }
+      },
+      "eager": {
+       "wall_s": 6.199,
+       "built": "daemon",
+       "load": 3.73,
+       "mem_available_mb": 5369,
+       "warm_s": 0.027,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.339,
+        "resolve": 1.5,
+        "compile": 0.955,
+        "emit": 0.0,
+        "link": 0.055,
+        "spare": 3.2,
+        "spare_add": 0.335,
+        "entries": 0.0,
+        "roots": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 7,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1182,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "cargo": {
+       "wall_s": 0.142,
+       "built": "cargo",
+       "load": 3.76,
+       "mem_available_mb": 5341,
+       "program": {
+        "main_ms": 0.9,
+        "run1_s": 0.001,
+        "run2_s": 0.001,
+        "output": [
+         0,
+         "Hello, world!\n",
+         ""
+        ]
+       }
+      },
+      "same_output": true
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 5,
+   "tag": null,
+   "members": 1
+  },
+  "ripgrep": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 10.241,
+       "built": "daemon",
+       "load": 3.76,
+       "mem_available_mb": 5342,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.901,
+        "resolve": 2.0,
+        "compile": 2.0,
+        "emit": 0.0,
+        "link": 0.08,
+        "spare": 5.1,
+        "spare_add": 0.892,
+        "entries": 0.004,
+        "roots": 0.148,
+        "stubs": 0.002,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1371,
+       "program": {
+        "main_ms": 79.0,
+        "run1_s": 0.081,
+        "run2_s": 0.092,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.061,
+       "built": "daemon",
+       "load": 4.5,
+       "mem_available_mb": 5536,
+       "warm_s": 0.041,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.365,
+        "resolve": 1.6,
+        "compile": 6.3,
+        "emit": 0.01,
+        "link": 0.176,
+        "spare": 3.4,
+        "spare_add": 0.361,
+        "entries": 0.0,
+        "roots": 0.151,
+        "object": 0.208
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1967,
+       "program": {
+        "main_ms": 2.2,
+        "run1_s": 0.007,
+        "run2_s": 0.007,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.083,
+       "built": "daemon",
+       "load": 4.42,
+       "mem_available_mb": 5310,
+       "warm_s": 0.028,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.466,
+        "resolve": 1.5,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.081,
+        "spare": 3.2,
+        "spare_add": 0.46,
+        "entries": 0.003,
+        "roots": 0.179,
+        "stubs": 0.002,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1967,
+       "program": {
+        "main_ms": 84.8,
+        "run1_s": 0.07,
+        "run2_s": 0.089,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 11.831,
+       "built": "daemon",
+       "load": 4.47,
+       "mem_available_mb": 5323,
+       "warm_s": 0.06,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.438,
+        "resolve": 1.6,
+        "compile": 6.0,
+        "emit": 0.01,
+        "link": 0.171,
+        "spare": 3.4,
+        "spare_add": 0.434,
+        "entries": 0.0,
+        "roots": 0.148,
+        "object": 0.269
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 1.7,
+        "run1_s": 0.006,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.667,
+       "built": "daemon",
+       "load": 4.17,
+       "mem_available_mb": 5282,
+       "warm_s": 0.028,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.408,
+        "resolve": 1.5,
+        "compile": 1.8,
+        "emit": 0.0,
+        "link": 0.075,
+        "spare": 3.7,
+        "spare_add": 0.404,
+        "entries": 0.003,
+        "roots": 0.186,
+        "stubs": 0.002,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 88.9,
+        "run1_s": 0.084,
+        "run2_s": 0.085,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.047,
+       "built": "daemon",
+       "load": 4.36,
+       "mem_available_mb": 5311,
+       "warm_s": 0.04,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.422,
+        "resolve": 1.5,
+        "compile": 6.2,
+        "emit": 0.03,
+        "link": 0.158,
+        "spare": 3.5,
+        "spare_add": 0.418,
+        "entries": 0.0,
+        "roots": 0.168,
+        "object": 0.253
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 2.8,
+        "run1_s": 0.007,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.285,
+       "built": "daemon",
+       "load": 4.38,
+       "mem_available_mb": 5364,
+       "warm_s": 0.038,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.391,
+        "resolve": 1.5,
+        "compile": 2.0,
+        "emit": 0.0,
+        "link": 0.076,
+        "spare": 3.2,
+        "spare_add": 0.386,
+        "entries": 0.003,
+        "roots": 0.151,
+        "stubs": 0.002,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 83.4,
+        "run1_s": 0.09,
+        "run2_s": 0.092,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.043,
+       "built": "daemon",
+       "load": 4.24,
+       "mem_available_mb": 5352,
+       "warm_s": 0.054,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.43,
+        "resolve": 1.6,
+        "compile": 6.1,
+        "emit": 0.025,
+        "link": 0.205,
+        "spare": 3.5,
+        "spare_add": 0.426,
+        "entries": 0.0,
+        "roots": 0.18,
+        "object": 0.293
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 2.5,
+        "run1_s": 0.008,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 4,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.895,
+       "built": "daemon",
+       "load": 4.36,
+       "mem_available_mb": 5444,
+       "warm_s": 0.029,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.462,
+        "resolve": 1.7,
+        "compile": 2.0,
+        "emit": 0.0,
+        "link": 0.077,
+        "spare": 3.5,
+        "spare_add": 0.457,
+        "entries": 0.016,
+        "roots": 0.203,
+        "stubs": 0.003,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 82.7,
+        "run1_s": 0.081,
+        "run2_s": 0.087,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.58,
+       "built": "daemon",
+       "load": 4.16,
+       "mem_available_mb": 5252,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.412,
+        "resolve": 1.7,
+        "compile": 6.7,
+        "emit": 0.017,
+        "link": 0.265,
+        "spare": 3.3,
+        "spare_add": 0.408,
+        "entries": 0.0,
+        "roots": 0.182,
+        "object": 0.268
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 2.0,
+        "run1_s": 0.007,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 5,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.799,
+       "built": "daemon",
+       "load": 4.74,
+       "mem_available_mb": 5445,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.418,
+        "resolve": 1.5,
+        "compile": 2.1,
+        "emit": 0.0,
+        "link": 0.077,
+        "spare": 3.5,
+        "spare_add": 0.412,
+        "entries": 0.004,
+        "roots": 0.191,
+        "stubs": 0.003,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 78,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 86.4,
+        "run1_s": 0.09,
+        "run2_s": 0.09,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 11.793,
+       "built": "daemon",
+       "load": 4.62,
+       "mem_available_mb": 5407,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.398,
+        "resolve": 1.5,
+        "compile": 6.3,
+        "emit": 0.019,
+        "link": 0.2,
+        "spare": 3.2,
+        "spare_add": 0.394,
+        "entries": 0.0,
+        "roots": 0.148,
+        "object": 0.314
+       },
+       "counts": {
+        "compiled": 1769,
+        "of": 1769,
+        "instances": 14977,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2000,
+       "program": {
+        "main_ms": 1.9,
+        "run1_s": 0.006,
+        "run2_s": 0.007,
+        "output": [
+         0,
+         "crates/core/main.rs:43:fn main() -> ExitCode {\nbuild.rs:1:fn main() {\n",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 5,
+   "tag": "15.1.0",
+   "members": 10
+  },
+  "fd": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 40.39,
+       "built": "daemon",
+       "load": 4.33,
+       "mem_available_mb": 5471,
+       "warm_s": 0.038,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 31.5,
+        "resolve": 2.2,
+        "compile": 1.4,
+        "emit": 0.0,
+        "link": 0.067,
+        "spare": 5.0,
+        "spare_add": 0.972,
+        "entries": 0.005,
+        "roots": 0.041,
+        "stubs": 0.001,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1492,
+       "program": {
+        "main_ms": 81.3,
+        "run1_s": 0.092,
+        "run2_s": 0.082,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.785,
+       "built": "daemon",
+       "load": 4.39,
+       "mem_available_mb": 5482,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.455,
+        "resolve": 2.2,
+        "compile": 4.5,
+        "emit": 0.005,
+        "link": 0.224,
+        "spare": 3.2,
+        "spare_add": 0.45,
+        "entries": 0.0,
+        "roots": 0.03,
+        "object": 0.131
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 2.3,
+        "run1_s": 0.011,
+        "run2_s": 0.011,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.293,
+       "built": "daemon",
+       "load": 4.48,
+       "mem_available_mb": 5594,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.515,
+        "resolve": 2.1,
+        "compile": 1.5,
+        "emit": 0.0,
+        "link": 0.067,
+        "spare": 3.0,
+        "spare_add": 0.512,
+        "entries": 0.004,
+        "roots": 0.03,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 88.4,
+        "run1_s": 0.083,
+        "run2_s": 0.085,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.19,
+       "built": "daemon",
+       "load": 4.32,
+       "mem_available_mb": 5527,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.459,
+        "resolve": 2.0,
+        "compile": 4.2,
+        "emit": 0.017,
+        "link": 0.225,
+        "spare": 3.0,
+        "spare_add": 0.456,
+        "entries": 0.0,
+        "roots": 0.03,
+        "object": 0.117
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 3.5,
+        "run1_s": 0.012,
+        "run2_s": 0.012,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.553,
+       "built": "daemon",
+       "load": 5.2,
+       "mem_available_mb": 5670,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.44,
+        "resolve": 2.2,
+        "compile": 1.5,
+        "emit": 0.0,
+        "link": 0.057,
+        "spare": 3.2,
+        "spare_add": 0.436,
+        "entries": 0.004,
+        "roots": 0.034,
+        "stubs": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 85.3,
+        "run1_s": 0.082,
+        "run2_s": 0.082,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.658,
+       "built": "daemon",
+       "load": 5.02,
+       "mem_available_mb": 5622,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.469,
+        "resolve": 1.9,
+        "compile": 4.7,
+        "emit": 0.022,
+        "link": 0.198,
+        "spare": 3.1,
+        "spare_add": 0.464,
+        "entries": 0.0,
+        "roots": 0.034,
+        "object": 0.118
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 3.0,
+        "run1_s": 0.012,
+        "run2_s": 0.01,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.693,
+       "built": "daemon",
+       "load": 5.01,
+       "mem_available_mb": 5721,
+       "warm_s": 0.029,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.504,
+        "resolve": 2.0,
+        "compile": 1.6,
+        "emit": 0.0,
+        "link": 0.053,
+        "spare": 3.4,
+        "spare_add": 0.5,
+        "entries": 0.003,
+        "roots": 0.035,
+        "stubs": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 89.4,
+        "run1_s": 0.09,
+        "run2_s": 0.091,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.512,
+       "built": "daemon",
+       "load": 5.01,
+       "mem_available_mb": 5653,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.468,
+        "resolve": 2.0,
+        "compile": 4.3,
+        "emit": 0.022,
+        "link": 0.208,
+        "spare": 3.4,
+        "spare_add": 0.463,
+        "entries": 0.0,
+        "roots": 0.029,
+        "object": 0.115
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 2.3,
+        "run1_s": 0.011,
+        "run2_s": 0.01,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 4,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.032,
+       "built": "daemon",
+       "load": 4.63,
+       "mem_available_mb": 5778,
+       "warm_s": 0.021,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.507,
+        "resolve": 2.0,
+        "compile": 1.2,
+        "emit": 0.0,
+        "link": 0.046,
+        "spare": 3.1,
+        "spare_add": 0.503,
+        "entries": 0.003,
+        "roots": 0.031,
+        "stubs": 0.0,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1805,
+       "program": {
+        "main_ms": 84.5,
+        "run1_s": 0.083,
+        "run2_s": 0.078,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.877,
+       "built": "daemon",
+       "load": 4.3,
+       "mem_available_mb": 5734,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.506,
+        "resolve": 2.1,
+        "compile": 4.5,
+        "emit": 0.017,
+        "link": 0.244,
+        "spare": 3.3,
+        "spare_add": 0.503,
+        "entries": 0.0,
+        "roots": 0.028,
+        "object": 0.142
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1809,
+       "program": {
+        "main_ms": 2.4,
+        "run1_s": 0.011,
+        "run2_s": 0.011,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 5,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.18,
+       "built": "daemon",
+       "load": 4.31,
+       "mem_available_mb": 5849,
+       "warm_s": 0.034,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.489,
+        "resolve": 2.0,
+        "compile": 1.8,
+        "emit": 0.0,
+        "link": 0.066,
+        "spare": 3.6,
+        "spare_add": 0.485,
+        "entries": 0.004,
+        "roots": 0.034,
+        "stubs": 0.001,
+        "object": 0.0
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 8,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1809,
+       "program": {
+        "main_ms": 88.2,
+        "run1_s": 0.086,
+        "run2_s": 0.094,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.257,
+       "built": "daemon",
+       "load": 3.96,
+       "mem_available_mb": 5786,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.436,
+        "resolve": 1.9,
+        "compile": 4.4,
+        "emit": 0.008,
+        "link": 0.21,
+        "spare": 3.2,
+        "spare_add": 0.432,
+        "entries": 0.0,
+        "roots": 0.029,
+        "object": 0.147
+       },
+       "counts": {
+        "compiled": 137,
+        "of": 137,
+        "instances": 9029,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1812,
+       "program": {
+        "main_ms": 2.5,
+        "run1_s": 0.01,
+        "run2_s": 0.011,
+        "output": [
+         0,
+         "src/main.rs\n",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 5,
+   "tag": "v10.3.0",
+   "members": 1
+  },
+  "hyperfine": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 14.112,
+       "built": "daemon",
+       "load": 4.03,
+       "mem_available_mb": 5814,
+       "warm_s": 0.038,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 4.1,
+        "resolve": 2.5,
+        "compile": 1.8,
+        "emit": 0.0,
+        "link": 0.125,
+        "spare": 5.4,
+        "spare_add": 1.1,
+        "entries": 0.003,
+        "roots": 0.026,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1689,
+       "program": {
+        "main_ms": 78.8,
+        "run1_s": 0.078,
+        "run2_s": 0.076,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 9.891,
+       "built": "daemon",
+       "load": 4.4,
+       "mem_available_mb": 5891,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.472,
+        "resolve": 2.2,
+        "compile": 3.6,
+        "emit": 0.002,
+        "link": 0.133,
+        "spare": 3.2,
+        "spare_add": 0.469,
+        "entries": 0.0,
+        "roots": 0.031,
+        "object": 0.044
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1706,
+       "program": {
+        "main_ms": 2.0,
+        "run1_s": 0.006,
+        "run2_s": 0.007,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.397,
+       "built": "daemon",
+       "load": 4.19,
+       "mem_available_mb": 5986,
+       "warm_s": 0.034,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.482,
+        "resolve": 2.4,
+        "compile": 1.9,
+        "emit": 0.0,
+        "link": 0.073,
+        "spare": 3.3,
+        "spare_add": 0.479,
+        "entries": 0.013,
+        "roots": 0.042,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1706,
+       "program": {
+        "main_ms": 79.4,
+        "run1_s": 0.077,
+        "run2_s": 0.079,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 9.851,
+       "built": "daemon",
+       "load": 3.93,
+       "mem_available_mb": 5670,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.493,
+        "resolve": 2.3,
+        "compile": 3.4,
+        "emit": 0.012,
+        "link": 0.233,
+        "spare": 3.2,
+        "spare_add": 0.488,
+        "entries": 0.0,
+        "roots": 0.03,
+        "object": 0.075
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1706,
+       "program": {
+        "main_ms": 1.9,
+        "run1_s": 0.005,
+        "run2_s": 0.005,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.276,
+       "built": "daemon",
+       "load": 4.38,
+       "mem_available_mb": 5774,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.498,
+        "resolve": 2.3,
+        "compile": 2.1,
+        "emit": 0.0,
+        "link": 0.125,
+        "spare": 3.1,
+        "spare_add": 0.495,
+        "entries": 0.002,
+        "roots": 0.033,
+        "stubs": 0.003,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1706,
+       "program": {
+        "main_ms": 80.5,
+        "run1_s": 0.078,
+        "run2_s": 0.088,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 10.224,
+       "built": "daemon",
+       "load": 4.39,
+       "mem_available_mb": 5816,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.554,
+        "resolve": 2.3,
+        "compile": 3.4,
+        "emit": 0.007,
+        "link": 0.173,
+        "spare": 3.7,
+        "spare_add": 0.548,
+        "entries": 0.0,
+        "roots": 0.03,
+        "object": 0.072
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1715,
+       "program": {
+        "main_ms": 1.7,
+        "run1_s": 0.007,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.777,
+       "built": "daemon",
+       "load": 4.6,
+       "mem_available_mb": 5885,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.534,
+        "resolve": 2.2,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.14,
+        "spare": 3.0,
+        "spare_add": 0.53,
+        "entries": 0.004,
+        "roots": 0.03,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1715,
+       "program": {
+        "main_ms": 83.6,
+        "run1_s": 0.092,
+        "run2_s": 0.082,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 9.549,
+       "built": "daemon",
+       "load": 4.87,
+       "mem_available_mb": 5954,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.516,
+        "resolve": 2.2,
+        "compile": 3.3,
+        "emit": 0.004,
+        "link": 0.153,
+        "spare": 3.2,
+        "spare_add": 0.511,
+        "entries": 0.0,
+        "roots": 0.016,
+        "object": 0.055
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1715,
+       "program": {
+        "main_ms": 1.7,
+        "run1_s": 0.005,
+        "run2_s": 0.005,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 4,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.789,
+       "built": "daemon",
+       "load": 4.8,
+       "mem_available_mb": 5909,
+       "warm_s": 0.032,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.486,
+        "resolve": 2.2,
+        "compile": 1.6,
+        "emit": 0.0,
+        "link": 0.08,
+        "spare": 3.3,
+        "spare_add": 0.482,
+        "entries": 0.002,
+        "roots": 0.02,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1715,
+       "program": {
+        "main_ms": 81.6,
+        "run1_s": 0.086,
+        "run2_s": 0.074,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 9.355,
+       "built": "daemon",
+       "load": 4.98,
+       "mem_available_mb": 5966,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.51,
+        "resolve": 2.3,
+        "compile": 3.2,
+        "emit": 0.003,
+        "link": 0.099,
+        "spare": 3.0,
+        "spare_add": 0.504,
+        "entries": 0.0,
+        "roots": 0.03,
+        "object": 0.043
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1715,
+       "program": {
+        "main_ms": 1.6,
+        "run1_s": 0.005,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 5,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 7.678,
+       "built": "daemon",
+       "load": 4.69,
+       "mem_available_mb": 5937,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.545,
+        "resolve": 2.2,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.081,
+        "spare": 3.0,
+        "spare_add": 0.541,
+        "entries": 0.004,
+        "roots": 0.025,
+        "stubs": 0.0,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 31,
+        "stubbed": 1,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1723,
+       "program": {
+        "main_ms": 92.5,
+        "run1_s": 0.087,
+        "run2_s": 0.076,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 8.887,
+       "built": "daemon",
+       "load": 4.82,
+       "mem_available_mb": 5945,
+       "warm_s": 0.034,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.527,
+        "resolve": 2.2,
+        "compile": 3.0,
+        "emit": 0.003,
+        "link": 0.103,
+        "spare": 2.9,
+        "spare_add": 0.524,
+        "entries": 0.0,
+        "roots": 0.021,
+        "object": 0.051
+       },
+       "counts": {
+        "compiled": 118,
+        "of": 118,
+        "instances": 5329,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1728,
+       "program": {
+        "main_ms": 1.5,
+        "run1_s": 0.005,
+        "run2_s": 0.006,
+        "output": [
+         0,
+         "A command-line benchmarking tool.\n\nUsage: hyperfine [OPTIONS] <command>...\n\nArguments:\n  <command>...\n          The command to benchmark. This can be the name of an executable, a\n          command line like \"grep -i todo\" or a shell command like \"sleep 0.5 &&\n          echo test\". The latter is only available if the shell is not\n          explicitly disabled via '--shell=none'. If multiple commands are\n          given, hyperfine will show a comparison of the respective runtimes.\n\nOptions:\n  -w, --warmup <NUM>\n          Perform NUM warmup runs before the actual benchmark. This can be used\n          to fill (disk) caches for I/O-heavy programs.\n  -m, --min-runs <NUM>\n          Perform at least NUM runs for each command (default: 10).\n  -M, --max-runs <NUM>\n          Perform at most NUM runs for each command. By default, there is no\n          limit.\n  -r, --runs <NUM>\n          Perform exactly NUM runs for each command. If this option is not\n          specified, hyperfine automatically determines the number of runs.\n  -s, --setup <CMD>\n          Execute CMD before each set of timing runs. This is useful for\n          compiling your software with the provided parameters, or to do any\n          other work that should happen once before a series of benchmark runs,\n          not every time as would happen with the --prepare option.\n      --reference <CMD>\n          The reference command for the relative comparison of results. If this\n          is unset, results are compared with the fastest command as reference.\n  -p, --prepare <CMD>\n          Execute CMD before each timing run. This is useful for clearing disk\n          caches, for example.\n          The --prepare option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          preparation command will be run prior to the corresponding benchmark\n          command.\n  -C, --conclude <CMD>\n          Execute CMD after each timing run. This is useful for killing\n          long-running processes started (e.g. a web server started in\n          --prepare), for example.\n          The --conclude option can be specified once for all commands or\n          multiple times, once for each command. In the latter case, each\n          conclude command will be run after the corresponding benchmark\n          command.\n  -c, --cleanup <CMD>\n          Execute CMD after the completion of all benchmarking runs for each\n          individual command to be benchmarked. This is useful if the commands\n          to be benchmarked produce artifacts that need to be cleaned up.\n  -P, --parameter-scan <VAR> <MIN> <MAX>\n          Perform benchmark runs for each value in the range MIN..MAX. Replaces\n          the string '{VAR}' in each command by the current parameter value.\n          \n            Example:  hyperfine -P threads 1 8 'make -j {threads}'\n          \n          This performs benchmarks for 'make -j 1', 'make -j 2', \u2026, 'make -j 8'.\n          \n          To have the value increase following different patterns, use shell\n          arithmetics.\n          \n            Example: hyperfine -P size 0 3 'sleep $((2**{size}))'\n          \n          This performs benchmarks with power of 2 increases: 'sleep 1', 'sleep\n          2', 'sleep 4', \u2026\n          The exact syntax may vary depending on your shell and OS.\n  -D, --parameter-step-size <DELTA>\n          This argument requires --parameter-scan to be specified as well.\n          Traverse the range MIN..MAX in steps of DELTA.\n          \n            Example:  hyperfine -P delay 0.3 0.7 -D 0.2 'sleep {delay}'\n          \n          This performs benchmarks for 'sleep 0.3', 'sleep 0.5' and 'sleep 0.7'.\n  -L, --parameter-list <VAR> <VALUES>\n          Perform benchmark runs for each value in the comma-separated list\n          VALUES. Replaces the string '{VAR}' in each command by the current\n          parameter value.\n          \n          Example:  hyperfine -L compiler gcc,clang '{compiler} -O2 main.cpp'\n          \n          This performs benchmarks for 'gcc -O2 main.cpp' and 'clang -O2\n          main.cpp'.\n          \n          The option can be specified multiple times to run benchmarks for all\n          possible parameter combinations.\n  -S, --shell <SHELL>\n          Set the shell to use for executing benchmarked commands. This can be\n          the name or the path to the shell executable, or a full command line\n          like \"bash --norc\". It can also be set to \"default\" to explicitly\n          select the default shell on this platform. Finally, this can also be\n          set to \"none\" to disable the shell. In this case, commands will be\n          executed directly. They can still have arguments, but more complex\n          things like \"sleep 0.1; sleep 0.2\" are not possible without a shell.\n  -N\n          An alias for '--shell=none'.\n  -i, --ignore-failure\n          Ignore non-zero exit codes of the benchmarked programs.\n      --style <TYPE>\n          Set output style type (default: auto). Set this to 'basic' to disable\n          output coloring and interactive elements. Set it to 'full' to enable\n          all effects even if no interactive terminal was detected. Set this to\n          'nocolor' to keep the interactive output without any colors. Set this\n          to 'color' to keep the colors without any interactive output. Set this\n          to 'none' to disable all the output of the tool.\n      --sort <METHOD>\n          Specify the sort order of the speed comparison summary and the\n          exported tables for markup formats (Markdown, AsciiDoc, org-mode):\n            * 'auto' (default): the speed comparison will be ordered by time and\n              the markup tables will be ordered by command (input order).\n            * 'command': order benchmarks in the way they were specified\n            * 'mean-time': order benchmarks by mean runtime\n  -u, --time-unit <UNIT>\n          Set the time unit to be used. Possible values: microsecond,\n          millisecond, second. If the option is not given, the time unit is\n          determined automatically. This option affects the standard output as\n          well as all export formats except for CSV and JSON.\n      --export-asciidoc <FILE>\n          Export the timing summary statistics as an AsciiDoc table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-csv <FILE>\n          Export the timing summary statistics as CSV to the given FILE. If you\n          need the timing results for each individual run, use the JSON export\n          format. The output time unit is always seconds.\n      --export-json <FILE>\n          Export the timing summary statistics and timings of individual runs as\n          JSON to the given FILE. The output time unit is always seconds\n      --export-markdown <FILE>\n          Export the timing summary statistics as a Markdown table to the given\n          FILE. The output time unit can be changed using the --time-unit\n          option.\n      --export-orgmode <FILE>\n          Export the timing summary statistics as an Emacs org-mode table to the\n          given FILE. The output time unit can be changed using the --time-unit\n          option.\n      --show-output\n          Print the stdout and stderr of the benchmark instead of suppressing\n          it. This will increase the time it takes for benchmarks to run, so it\n          should only be used for debugging purposes or when trying to benchmark\n          output speed.\n      --output <WHERE>\n          Control where the output of the benchmark is redirected. Note that\n          some programs like 'grep' detect when standard output is /dev/null and\n          apply certain optimizations. To avoid that, consider using\n          '--output=pipe'.\n          \n          <WHERE> can be:\n          \n            null:     Redirect output to /dev/null (the default).\n          \n            pipe:     Feed the output through a pipe before discarding it.\n          \n            inherit:  Don't redirect the output at all (same as\n            '--show-output').\n          \n            <FILE>:   Write the output to the given file.\n          \n          This option can be specified once for all commands or multiple times,\n          once for each command. Note: If you want to log the output of each and\n          every iteration, you can use a shell redirection and the\n          '$HYPERFINE_ITERATION' environment variable:\n              hyperfine 'my-command > output-${HYPERFINE_ITERATION}.log'\n      --input <WHERE>\n          Control where the input of the benchmark comes from.\n          \n          <WHERE> can be:\n          \n            null:     Read from /dev/null (the default).\n          \n            <FILE>:   Read the input from the given file.\n  -n, --command-name <NAME>\n          Give a meaningful name to a command. This can be specified multiple\n          times if several commands are benchmarked.\n  -h, --help\n          Print help\n  -V, --version\n          Print version\n",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 5,
+   "tag": "v1.19.0",
+   "members": 1
+  },
+  "bat": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 30.907,
+       "built": "daemon",
+       "load": 5.01,
+       "mem_available_mb": 5872,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 17.7,
+        "resolve": 6.0,
+        "compile": 1.4,
+        "emit": 0.0,
+        "link": 0.129,
+        "spare": 5.5,
+        "spare_add": 1.4,
+        "entries": 0.004,
+        "roots": 0.053,
+        "stubs": 0.001,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1899,
+       "program": {
+        "main_ms": 102.2,
+        "run1_s": 0.112,
+        "run2_s": 0.102,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.183,
+       "built": "daemon",
+       "load": 5.63,
+       "mem_available_mb": 6092,
+       "warm_s": 0.031,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.7,
+        "resolve": 2.5,
+        "compile": 5.3,
+        "emit": 0.006,
+        "link": 0.301,
+        "spare": 3.1,
+        "spare_add": 0.695,
+        "entries": 0.0,
+        "roots": 0.038,
+        "object": 0.153
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2104,
+       "program": {
+        "main_ms": 5.5,
+        "run1_s": 0.019,
+        "run2_s": 0.012,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.442,
+       "built": "daemon",
+       "load": 5.14,
+       "mem_available_mb": 6159,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.71,
+        "resolve": 2.6,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.243,
+        "spare": 3.0,
+        "spare_add": 0.705,
+        "entries": 0.004,
+        "roots": 0.042,
+        "stubs": 0.001,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2104,
+       "program": {
+        "main_ms": 87.7,
+        "run1_s": 0.094,
+        "run2_s": 0.08,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.641,
+       "built": "daemon",
+       "load": 4.89,
+       "mem_available_mb": 6130,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.651,
+        "resolve": 2.6,
+        "compile": 5.6,
+        "emit": 0.013,
+        "link": 0.425,
+        "spare": 3.1,
+        "spare_add": 0.646,
+        "entries": 0.0,
+        "roots": 0.031,
+        "object": 0.176
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2128,
+       "program": {
+        "main_ms": 3.9,
+        "run1_s": 0.01,
+        "run2_s": 0.011,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 9.255,
+       "built": "daemon",
+       "load": 4.97,
+       "mem_available_mb": 6280,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.695,
+        "resolve": 2.7,
+        "compile": 2.3,
+        "emit": 0.0,
+        "link": 0.239,
+        "spare": 3.1,
+        "spare_add": 0.69,
+        "entries": 0.002,
+        "roots": 0.048,
+        "stubs": 0.001,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2128,
+       "program": {
+        "main_ms": 87.1,
+        "run1_s": 0.095,
+        "run2_s": 0.096,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.515,
+       "built": "daemon",
+       "load": 4.75,
+       "mem_available_mb": 6296,
+       "warm_s": 0.028,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.685,
+        "resolve": 2.5,
+        "compile": 5.5,
+        "emit": 0.015,
+        "link": 0.306,
+        "spare": 3.3,
+        "spare_add": 0.68,
+        "entries": 0.0,
+        "roots": 0.026,
+        "object": 0.172
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2128,
+       "program": {
+        "main_ms": 3.7,
+        "run1_s": 0.016,
+        "run2_s": 0.016,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.235,
+       "built": "daemon",
+       "load": 4.9,
+       "mem_available_mb": 6542,
+       "warm_s": 0.028,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.624,
+        "resolve": 2.6,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.121,
+        "spare": 3.0,
+        "spare_add": 0.618,
+        "entries": 0.003,
+        "roots": 0.047,
+        "stubs": 0.001,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2128,
+       "program": {
+        "main_ms": 90.1,
+        "run1_s": 0.074,
+        "run2_s": 0.082,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 12.221,
+       "built": "daemon",
+       "load": 4.83,
+       "mem_available_mb": 6501,
+       "warm_s": 0.033,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.668,
+        "resolve": 2.5,
+        "compile": 5.5,
+        "emit": 0.047,
+        "link": 0.387,
+        "spare": 2.9,
+        "spare_add": 0.663,
+        "entries": 0.0,
+        "roots": 0.035,
+        "object": 0.24
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2134,
+       "program": {
+        "main_ms": 3.6,
+        "run1_s": 0.015,
+        "run2_s": 0.016,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 4,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.102,
+       "built": "daemon",
+       "load": 4.95,
+       "mem_available_mb": 6556,
+       "warm_s": 0.035,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.667,
+        "resolve": 2.4,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.147,
+        "spare": 3.0,
+        "spare_add": 0.662,
+        "entries": 0.003,
+        "roots": 0.041,
+        "stubs": 0.0,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2134,
+       "program": {
+        "main_ms": 94.5,
+        "run1_s": 0.099,
+        "run2_s": 0.089,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 11.895,
+       "built": "daemon",
+       "load": 4.88,
+       "mem_available_mb": 6580,
+       "warm_s": 0.03,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.665,
+        "resolve": 2.5,
+        "compile": 5.2,
+        "emit": 0.018,
+        "link": 0.316,
+        "spare": 3.0,
+        "spare_add": 0.66,
+        "entries": 0.0,
+        "roots": 0.032,
+        "object": 0.217
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2148,
+       "program": {
+        "main_ms": 3.7,
+        "run1_s": 0.015,
+        "run2_s": 0.016,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 5,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 8.156,
+       "built": "daemon",
+       "load": 5.2,
+       "mem_available_mb": 6595,
+       "warm_s": 0.028,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.695,
+        "resolve": 2.5,
+        "compile": 1.7,
+        "emit": 0.0,
+        "link": 0.143,
+        "spare": 3.0,
+        "spare_add": 0.69,
+        "entries": 0.003,
+        "roots": 0.04,
+        "stubs": 0.001,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 120,
+        "stubbed": 2,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2148,
+       "program": {
+        "main_ms": 87.3,
+        "run1_s": 0.089,
+        "run2_s": 0.092,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 11.892,
+       "built": "daemon",
+       "load": 5.49,
+       "mem_available_mb": 6532,
+       "warm_s": 0.029,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.655,
+        "resolve": 2.4,
+        "compile": 4.9,
+        "emit": 0.023,
+        "link": 0.294,
+        "spare": 3.4,
+        "spare_add": 0.649,
+        "entries": 0.0,
+        "roots": 0.033,
+        "object": 0.193
+       },
+       "counts": {
+        "compiled": 292,
+        "of": 292,
+        "instances": 10607,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 2165,
+       "program": {
+        "main_ms": 3.8,
+        "run1_s": 0.015,
+        "run2_s": 0.015,
+        "output": [
+         0,
+         "# Defaults are used\n",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 5,
+   "tag": "v0.26.0",
+   "members": 1
+  },
+  "nushell": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 102.569,
+       "built": "daemon",
+       "load": 4.95,
+       "mem_available_mb": 6602,
+       "warm_s": 0.042,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 81.5,
+        "resolve": 8.7,
+        "compile": 5.9,
+        "emit": 0.008,
+        "link": 0.522,
+        "spare": 5.5,
+        "spare_add": 2.7,
+        "entries": 0.003,
+        "roots": 0.872,
+        "stubs": 0.021,
+        "object": 0.133
+       },
+       "counts": {
+        "compiled": 5,
+        "of": 5,
+        "instances": 4775,
+        "stubbed": 154,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 3665,
+       "program": {
+        "main_ms": 109.0,
+        "run1_s": 0.122,
+        "run2_s": 0.126,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 135.31,
+       "built": "daemon",
+       "load": 7.66,
+       "mem_available_mb": 7390,
+       "warm_s": 0.058,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 1.8,
+        "resolve": 15.6,
+        "compile": 98.3,
+        "emit": 1.5,
+        "link": 4.8,
+        "spare": 3.5,
+        "spare_add": 1.8,
+        "entries": 0.0,
+        "roots": 0.769,
+        "object": 29.0
+       },
+       "counts": {
+        "compiled": 7697,
+        "of": 7697,
+        "instances": 146259,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 9.2,
+        "run1_s": 0.095,
+        "run2_s": 0.069,
+        "output": [
+         0,
+         "1,2,3",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 48.005,
+       "built": "daemon",
+       "load": 7.56,
+       "mem_available_mb": 8905,
+       "warm_s": 0.046,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 3.2,
+        "resolve": 28.2,
+        "compile": 8.9,
+        "emit": 0.007,
+        "link": 0.868,
+        "spare": 6.4,
+        "spare_add": 3.2,
+        "entries": 0.003,
+        "roots": 1.2,
+        "stubs": 0.018,
+        "object": 0.135
+       },
+       "counts": {
+        "compiled": 5,
+        "of": 5,
+        "instances": 4775,
+        "stubbed": 154,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 146.9,
+        "run1_s": 0.134,
+        "run2_s": 0.147,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 156.169,
+       "built": "daemon",
+       "load": 5.77,
+       "mem_available_mb": 8244,
+       "warm_s": 0.1,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 2.9,
+        "resolve": 27.4,
+        "compile": 109.6,
+        "emit": 0.74,
+        "link": 4.0,
+        "spare": 5.9,
+        "spare_add": 2.9,
+        "entries": 0.0,
+        "roots": 1.0,
+        "object": 11.8
+       },
+       "counts": {
+        "compiled": 7697,
+        "of": 7697,
+        "instances": 146259,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 9.3,
+        "run1_s": 0.069,
+        "run2_s": 0.07,
+        "output": [
+         0,
+         "1,2,3",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 2,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 48.746,
+       "built": "daemon",
+       "load": 6.17,
+       "mem_available_mb": 9286,
+       "warm_s": 0.048,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 3.2,
+        "resolve": 27.5,
+        "compile": 8.8,
+        "emit": 0.008,
+        "link": 0.736,
+        "spare": 8.0,
+        "spare_add": 3.2,
+        "entries": 0.003,
+        "roots": 1.2,
+        "stubs": 0.025,
+        "object": 0.15
+       },
+       "counts": {
+        "compiled": 5,
+        "of": 5,
+        "instances": 4775,
+        "stubbed": 154,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 151.4,
+        "run1_s": 0.156,
+        "run2_s": 0.136,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 155.788,
+       "built": "daemon",
+       "load": 5.77,
+       "mem_available_mb": 8872,
+       "warm_s": 0.408,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 3.0,
+        "resolve": 26.6,
+        "compile": 111.4,
+        "emit": 0.216,
+        "link": 3.8,
+        "spare": 6.1,
+        "spare_add": 2.9,
+        "entries": 0.0,
+        "roots": 0.964,
+        "object": 11.8
+       },
+       "counts": {
+        "compiled": 7697,
+        "of": 7697,
+        "instances": 146259,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 8.4,
+        "run1_s": 0.073,
+        "run2_s": 0.062,
+        "output": [
+         0,
+         "1,2,3",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 3,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 47.905,
+       "built": "daemon",
+       "load": 6.5,
+       "mem_available_mb": 8973,
+       "warm_s": 0.042,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 3.1,
+        "resolve": 27.0,
+        "compile": 8.7,
+        "emit": 0.008,
+        "link": 0.634,
+        "spare": 8.0,
+        "spare_add": 3.1,
+        "entries": 0.004,
+        "roots": 1.1,
+        "stubs": 0.016,
+        "object": 0.13
+       },
+       "counts": {
+        "compiled": 5,
+        "of": 5,
+        "instances": 4775,
+        "stubbed": 154,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 136.8,
+        "run1_s": 0.136,
+        "run2_s": 0.145,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 154.437,
+       "built": "daemon",
+       "load": 5.63,
+       "mem_available_mb": 8525,
+       "warm_s": 1.105,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 2.2,
+        "resolve": 27.1,
+        "compile": 108.4,
+        "emit": 0.723,
+        "link": 3.2,
+        "spare": 6.0,
+        "spare_add": 2.2,
+        "entries": 0.0,
+        "roots": 1.0,
+        "object": 11.4
+       },
+       "counts": {
+        "compiled": 7697,
+        "of": 7697,
+        "instances": 146259,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 9052,
+       "program": {
+        "main_ms": 8.9,
+        "run1_s": 0.065,
+        "run2_s": 0.061,
+        "output": [
+         0,
+         "1,2,3",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 3,
+   "tag": "0.108.0",
+   "members": 40
+  },
+  "genws": {
+   "events": {
+    "deps": [
+     {
+      "turn": 0,
+      "warmup": true,
+      "rustd": {
+       "wall_s": 18.299,
+       "built": "daemon",
+       "load": 5.39,
+       "mem_available_mb": 9383,
+       "warm_s": 0.069,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.517,
+        "resolve": 4.3,
+        "compile": 7.2,
+        "emit": 0.0,
+        "link": 0.071,
+        "spare": 5.9,
+        "spare_add": 0.499,
+        "entries": 0.034,
+        "roots": 4.1,
+        "stubs": 0.002,
+        "object": 0.001
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 107,
+        "stubbed": 30,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 1733,
+       "program": {
+        "main_ms": 91.7,
+        "run1_s": 0.088,
+        "run2_s": 0.087,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 274.168,
+       "built": "daemon",
+       "load": 4.85,
+       "mem_available_mb": 9111,
+       "warm_s": 0.252,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.496,
+        "resolve": 4.2,
+        "compile": 242.2,
+        "emit": 0.784,
+        "link": 6.0,
+        "spare": 5.8,
+        "spare_add": 0.49,
+        "entries": 0.0,
+        "roots": 3.7,
+        "object": 53.2
+       },
+       "counts": {
+        "compiled": 25154,
+        "of": 25154,
+        "instances": 308655,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 7407,
+       "program": {
+        "main_ms": 78.0,
+        "run1_s": 0.077,
+        "run2_s": 0.072,
+        "output": [
+         0,
+         "g000 47f7e03043e68137\ng001 8dc87cef0dfe031c\ng002 51d1a5f2de799958\ng003 51357ef60c802a51\ng004 4f6eaf2f3acf12a0\ng005 2ac86190162973b7\ng006 38f04c112509fc0e\ng007 930f32430e3e1fe4\ng008 69d50f0682c00c0d\ng009 e333ba611435f0e5\ng010 05c57befeeaa79d8\ng011 13f0fa8d4a8cac85\ng012 5dffbc6251c9e1ac\ng013 ffbed896059f4ea6\ng014 1d6be1251f2b4f46\ng015 9ee3b9077936198e\ng016 001649497b9cfcac\ng017 0aa7e83805140513\ng018 2b750eccd0e19e4a\ng019 da9efcc0d381c4fb\ng020 e27b1b5c4b705be4\ng021 b3c3493e9cc124e3\ng022 37d9de8a2bc84d94\ng023 99f00b61a559f0b7\ng024 3dc839a110dc1450\ng025 1b06862ad3fef5cf\ng026 fc66e60095e8da72\ng027 53b36359d06d3292\ng028 437868b86297bff7\ng029 f62e865b9b991b76\ng030 3e64bb3809c50cfa\ng031 3e418b778c581020\ng032 27cd4c736af8fa2f\ng033 24e5b19bf0d9d1cf\ng034 70087952d1fe0e95\ng035 f7d52cf2aeab669f\ng036 81a235a28d982b24\ng037 df80861a54786867\ng038 841bd72b48832d0a\ng039 5fb822157d86a701\ng040 12c65b5c04fb31ab\ng041 1b064828533001d9\ng042 c6cb56711b83e8d1\ng043 3322d04c1695faaa\ng044 b7d1f97c2d6d20a1\ng045 63b0f850949c47b1\ng046 1dc5b9720685e3b6\ng047 11f57987c4395cdd\ng048 62ec39e8792b3d88\ng049 47a8691bc66cff5e\ng050 589ced2eb3c7428c\ng051 4a9de27969ca1e41\ng052 e34ddccb27ccd5a9\ng053 e3b997066fee039e\ng054 db201c57bc00c179\ng055 528d3b470119a778\ng056 47778dec3a0ac394\ng057 ac1298f845813250\ng058 87ca884fe23c2477\ng059 91b47acee0f037b1\ng060 77cbca7c71167737\ng061 2ae548ca0b285bde\ng062 4bbb0551433a81fa\ng063 afbe2154e8cb743e\ng064 55ab41796b38d067\ng065 61f302b86cab11e8\ng066 6f85ad27ef16db8c\ng067 d5c2cb87893be663\ng068 6f1b0e416a46c395\ng069 60a7e11263fa56cc\ng070 5ca91b0c0c780f45\ng071 7e8b39ed19e55fb5\ng072 7e6ed135758fa432\ng073 1ec5f0249b5fe182\ng074 b0fc17d01ce6775a\ng075 b5092be3a5c10b20\ng076 a6556ab75074f6b7\ng077 021c9a02e7fc6580\ng078 03740492a0cf25c1\ng079 45de2ae603f976ad\ng080 80c96d20cf94e017\ng081 e730ed000c0677de\ng082 0cb20160f110e9cc\ng083 f8c7158afdfbf81b\ng084 a497fad04a235eb9\ng085 49d279552ea66c36\ng086 6405459b8ef47596\ng087 787eb82ef173dac2\ng088 8c2af71dae8c21cc\ng089 26a383282df4b1d6\ng090 d3a45cd59cb4a348\ng091 6c1ce836f123db8c\ng092 c0d80873a0c51b16\ng093 06ce901351dca55c\ng094 fb1f8a82d8e97eeb\ng095 d67d551119b3ce1a\ng096 cc0ba587ea5a07f1\ng097 ea2812e4b7d9d9a9\ng098 5a0132ac3eb59c57\ntotal 2c8effc2ff42c6cb of 99\n",
+         ""
+        ]
+       }
+      }
+     },
+     {
+      "turn": 1,
+      "warmup": false,
+      "rustd": {
+       "wall_s": 20.348,
+       "built": "daemon",
+       "load": 8.4,
+       "mem_available_mb": 7178,
+       "warm_s": 0.042,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.591,
+        "resolve": 4.3,
+        "compile": 7.4,
+        "emit": 0.001,
+        "link": 0.126,
+        "spare": 7.6,
+        "spare_add": 0.583,
+        "entries": 0.021,
+        "roots": 4.1,
+        "stubs": 0.001,
+        "object": 0.002
+       },
+       "counts": {
+        "compiled": 1,
+        "of": 1,
+        "instances": 107,
+        "stubbed": 30,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 7407,
+       "program": {
+        "main_ms": 97.1,
+        "run1_s": 0.097,
+        "run2_s": 0.088,
+        "output": [
+         -4,
+         "",
+         ""
+        ],
+        "lazy_exit": -4
+       }
+      },
+      "eager": {
+       "wall_s": 212.324,
+       "built": "daemon",
+       "load": 8.06,
+       "mem_available_mb": 7419,
+       "warm_s": 0.222,
+       "states": [
+        "ready"
+       ],
+       "steps_s": {
+        "load": 0.513,
+        "resolve": 4.3,
+        "compile": 187.9,
+        "emit": 0.63,
+        "link": 2.5,
+        "spare": 5.9,
+        "spare_add": 0.507,
+        "entries": 0.0,
+        "roots": 3.7,
+        "object": 45.2
+       },
+       "counts": {
+        "compiled": 25154,
+        "of": 25154,
+        "instances": 308655,
+        "left_to_rustc": 0
+       },
+       "link": "full link: no executable to add to",
+       "rss_mb": 7694,
+       "program": {
+        "main_ms": 76.0,
+        "run1_s": 0.078,
+        "run2_s": 0.086,
+        "output": [
+         0,
+         "g000 47f7e03043e68137\ng001 8dc87cef0dfe031c\ng002 51d1a5f2de799958\ng003 51357ef60c802a51\ng004 4f6eaf2f3acf12a0\ng005 2ac86190162973b7\ng006 38f04c112509fc0e\ng007 930f32430e3e1fe4\ng008 69d50f0682c00c0d\ng009 e333ba611435f0e5\ng010 05c57befeeaa79d8\ng011 13f0fa8d4a8cac85\ng012 5dffbc6251c9e1ac\ng013 ffbed896059f4ea6\ng014 1d6be1251f2b4f46\ng015 9ee3b9077936198e\ng016 001649497b9cfcac\ng017 0aa7e83805140513\ng018 2b750eccd0e19e4a\ng019 da9efcc0d381c4fb\ng020 e27b1b5c4b705be4\ng021 b3c3493e9cc124e3\ng022 37d9de8a2bc84d94\ng023 99f00b61a559f0b7\ng024 3dc839a110dc1450\ng025 1b06862ad3fef5cf\ng026 fc66e60095e8da72\ng027 53b36359d06d3292\ng028 437868b86297bff7\ng029 f62e865b9b991b76\ng030 3e64bb3809c50cfa\ng031 3e418b778c581020\ng032 27cd4c736af8fa2f\ng033 24e5b19bf0d9d1cf\ng034 70087952d1fe0e95\ng035 f7d52cf2aeab669f\ng036 81a235a28d982b24\ng037 df80861a54786867\ng038 841bd72b48832d0a\ng039 5fb822157d86a701\ng040 12c65b5c04fb31ab\ng041 1b064828533001d9\ng042 c6cb56711b83e8d1\ng043 3322d04c1695faaa\ng044 b7d1f97c2d6d20a1\ng045 63b0f850949c47b1\ng046 1dc5b9720685e3b6\ng047 11f57987c4395cdd\ng048 62ec39e8792b3d88\ng049 47a8691bc66cff5e\ng050 589ced2eb3c7428c\ng051 4a9de27969ca1e41\ng052 e34ddccb27ccd5a9\ng053 e3b997066fee039e\ng054 db201c57bc00c179\ng055 528d3b470119a778\ng056 47778dec3a0ac394\ng057 ac1298f845813250\ng058 87ca884fe23c2477\ng059 91b47acee0f037b1\ng060 77cbca7c71167737\ng061 2ae548ca0b285bde\ng062 4bbb0551433a81fa\ng063 afbe2154e8cb743e\ng064 55ab41796b38d067\ng065 61f302b86cab11e8\ng066 6f85ad27ef16db8c\ng067 d5c2cb87893be663\ng068 6f1b0e416a46c395\ng069 60a7e11263fa56cc\ng070 5ca91b0c0c780f45\ng071 7e8b39ed19e55fb5\ng072 7e6ed135758fa432\ng073 1ec5f0249b5fe182\ng074 b0fc17d01ce6775a\ng075 b5092be3a5c10b20\ng076 a6556ab75074f6b7\ng077 021c9a02e7fc6580\ng078 03740492a0cf25c1\ng079 45de2ae603f976ad\ng080 80c96d20cf94e017\ng081 e730ed000c0677de\ng082 0cb20160f110e9cc\ng083 f8c7158afdfbf81b\ng084 a497fad04a235eb9\ng085 49d279552ea66c36\ng086 6405459b8ef47596\ng087 787eb82ef173dac2\ng088 8c2af71dae8c21cc\ng089 26a383282df4b1d6\ng090 d3a45cd59cb4a348\ng091 6c1ce836f123db8c\ng092 c0d80873a0c51b16\ng093 06ce901351dca55c\ng094 fb1f8a82d8e97eeb\ng095 d67d551119b3ce1a\ng096 cc0ba587ea5a07f1\ng097 ea2812e4b7d9d9a9\ng098 5a0132ac3eb59c57\ntotal 2c8effc2ff42c6cb of 99\n",
+         ""
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "wrong": [],
+   "runs": 1,
+   "tag": null,
+   "members": 100
+  }
+ },
+ "daemon_version": "0.0.0-462bde0-18e5d9bf4e76efdb"
+}
