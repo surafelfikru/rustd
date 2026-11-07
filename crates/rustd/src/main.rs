@@ -3023,6 +3023,10 @@ fn lower(db: &RootDatabase, bodies: Vec<DefWithBodyId>) -> Vec<DefWithBodyId> {
 struct Build {
     compiled: usize,
     skipped: Vec<(String, CodegenError)>,
+    /// The roots a lazy build put a stub in the object for: none in an eager build.
+    stubbed: Vec<String>,
+    /// The roots a lazy build compiled before the program runs, with why each is.
+    eager: Vec<(String, EagerReason)>,
     instances: usize,
     codegen: Duration,
     emit: Duration,
@@ -3334,6 +3338,8 @@ fn build(
             .into_iter()
             .map(|(func, e)| (name(func), with_failed_macro(db, func, e)))
             .collect(),
+        stubbed: unit.stubbed.iter().map(|&(func, _)| name(func)).collect(),
+        eager: lazy.iter().flat_map(|it| &it.eager).map(|&(func, why)| (name(func), why)).collect(),
         instances: unit.instances,
         codegen,
         emit: start.elapsed(),
@@ -3389,6 +3395,12 @@ impl Build {
             let error = error.to_string().replace(['\t', '\n'], " ");
             writeln!(out, "skipped\t{name}\t{error}")?;
         }
+        for name in &self.stubbed {
+            writeln!(out, "stubbed\t{name}\t")?;
+        }
+        for (name, reason) in &self.eager {
+            writeln!(out, "eager\t{name}\t{}", reason.as_str())?;
+        }
         Ok(std::fs::write(path, out)?)
     }
 }
@@ -3432,6 +3444,9 @@ fn report(build: &Build) {
         build.codegen,
         build.emit,
     );
+    if !build.stubbed.is_empty() {
+        eprintln!("stubbed {} fns", build.stubbed.len());
+    }
     if let Some(path) = std::env::var_os("RUSTD_SKIPPED") {
         let all: String =
             build.skipped.iter().map(|(name, error)| format!("{name}: {error}\n")).collect();
