@@ -124,6 +124,8 @@ run stress.py
 run breakers.py
 run unwinds.py
 run splices.py
+# The table of stubs is ELF's, and a lazy build is measured with Cranelift.
+if linux && [ "$RUSTD_BACKEND" = cranelift ]; then run lazy.py; fi
 # A branch reaches 128 MB on AArch64, and the splice has to get past that. Mach-O is not spliced.
 if linux && [ "$arch" = aarch64 ]; then RUSTD_SPLICE=1 run farsplices.py; fi
 run asmedits.py

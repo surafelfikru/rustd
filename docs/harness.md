@@ -96,6 +96,7 @@ with reasons. The daemon's log says `backend: llvm -O2 fast emit` when LLVM is i
 | `cratesweep.sh`, `vendor.sh`, `sweepreport.py` | `cratetest.py` over a list of crates.io releases, and a summary |
 | `bintest.py <name>` | A real program from `breakers/bins.json`: the same command lines given to cargo's binary and rustd's |
 | `alone.py` | A program whose workspace crates rustc compiles nothing of, so no refused function can hide behind rustc's copy |
+| `lazy.py` | A lazy build (`--lazy`): each way code is called by something other than our compiled code (exported, `atexit` and `signal` callbacks, `.init_array`, a `#[used]` static, `asm!`, naked) is compiled with its reason, a plain function is a stub that dies with SIGILL, the `.rustd.lazy` table's rows point at their stubs in the linked binary, the eager build prints what cargo's does, and no stub of the corpus program is refused. Linux, Cranelift |
 | `backends.py` | One program compiled by each code producer: counts, time per function, and what LLVM left to Cranelift |
 | `scoreboard.py` | Runs the targets in `targets.json` and fails when behaviour differs or coverage drops below the committed `scoreboard.json` |
 
